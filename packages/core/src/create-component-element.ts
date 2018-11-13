@@ -19,9 +19,9 @@ export function createComponentElement({
     // Every time a new element is instantiated
     // it should create a new component?
     class ComponentElement extends HTMLElement {
-      public _root: ShadowRoot | this;
-      public _host: Node | Node[];
-      public _component: IComponent;
+      private _root: ShadowRoot | this;
+      private _host: Node | Node[];
+      private _component: IComponent;
 
       static observedAttributes = props.map(({ name }) => name);
 
@@ -35,26 +35,7 @@ export function createComponentElement({
         return this.shadowRoot || this;
       }
 
-      connectedCallback() {
-        this._root = this._createRoot();
-        this._component = injector.resolve(componentRef);
-
-        this._host = this._component.render();
-
-        toArray(<Node>this._host).forEach(item => {
-          this._root.appendChild(item);
-        });
-
-        if (Array.isArray(styles)) {
-          styles.forEach(style => {
-            this._root.appendChild(cssToDom(style));
-          });
-        }
-
-        if (element && element.propertyKey) {
-          this._component[element.propertyKey] = this._root;
-        }
-
+      private _setViewChildren() {
         viewChildren.forEach(({ child, propertyKey }) => {
           // @TODO: if it is a shadow root, get the component using injector instead
           const { selector } = MetadataStorage.getComponent(child);
@@ -66,7 +47,9 @@ export function createComponentElement({
 
           this._component[propertyKey] = childEl._root;
         });
+      }
 
+      private _setProps() {
         props.forEach(({ name, propertyKey }) => {
           if (this.hasAttribute(name)) {
             this._component[propertyKey] = this.getAttribute(name);
@@ -74,21 +57,61 @@ export function createComponentElement({
         });
       }
 
-      /*async disconnectedCallback() {
-        if (Utils.isFunction(this._component.componentWillUnmount)) {
+      private _applyStyles() {
+        if (Array.isArray(styles)) {
+          styles.forEach(style => {
+            this._root.appendChild(cssToDom(style));
+          });
+        }
+      }
+
+      private _setElement() {
+        if (element && element.propertyKey) {
+          this._component[element.propertyKey] = this._root;
+        }
+      }
+
+      connectedCallback() {
+        this._root = this._createRoot();
+        this._component = injector.resolve(componentRef);
+
+        this._setProps();
+
+        this._host = this._component.render();
+
+        toArray(<Node>this._host).forEach(item => {
+          this._root.appendChild(item);
+        });
+
+        states.forEach(({ propertyKey }) => {
+
+        });
+
+        this._applyStyles();
+        this._setElement();
+        this._setViewChildren();
+      }
+
+      async disconnectedCallback() {
+        if (typeof this._component.componentWillUnmount === 'function') {
           await this._component.componentWillUnmount();
         }
-      }*/
+      }
 
+      private _reflectStateChanges() {}
 
-      attributeChangedCallback(name: string, oldValue: any, newValue: any) {
-        if (!this.isConnected) return;
-
+      private _reflectAttrChanges(name: string, oldValue: any, newValue: any) {
         const { propertyKey } = MetadataStorage.getPropByName(componentRef, name);
 
         if (newValue !== this._component[propertyKey]) {
           this._component[propertyKey] = newValue;
         }
+      }
+
+      attributeChangedCallback(name: string, oldValue: any, newValue: any) {
+        if (!this.isConnected) return;
+
+        this._reflectAttrChanges(name, oldValue, newValue);
       }
 
     }

@@ -56,7 +56,7 @@ describe('ComponentRegisterService', () => {
       @Prop() todo: string;
 
       render() {
-        return [];
+        return this.todo;
       }
     }
 
