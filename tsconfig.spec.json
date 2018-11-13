@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "types": [
+      "jasmine",
+      "node",
+      "jasmine-expect",
+      "jasmine-matchers"
+    ]
+  },
+  "include": [
+    "packages/**/*.spec.ts",
+    "packages/**/*.spec.tsx",
+    "**/*.d.ts"
+  ]
+}

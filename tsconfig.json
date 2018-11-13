@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "./packages",
+    "paths": {
+      "@onex/core/*": ["./core/src/*"],
+      "@onex/*": ["./*/src"]
+    }
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
