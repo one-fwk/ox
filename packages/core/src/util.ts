@@ -1,3 +1,5 @@
+import { Utils } from '@one/core';
+
 export function cssToDom(css: string) {
   const style = document.createElement('style');
   style.textContent = css;
@@ -36,4 +38,18 @@ export async function expectError(fn: () => Promise<any>, expected = Error) {
   }
 
   return expect(error).toEqual(jasmine.any(expected));
+}
+
+export function parseClassList(value: string | undefined | null): string[] {
+  return (Utils.isNil(value) || value === '') ? [] : value.trim().split(/\s+/);
+}
+
+/**
+ * Attempt to set a DOM property to the given value.
+ * IE & FF throw for certain property-value combinations.
+ */
+export function setProperty(elm: any, name: string, value: any) {
+  try {
+    elm[name] = value;
+  } catch (e) { }
 }

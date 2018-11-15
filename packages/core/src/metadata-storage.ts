@@ -1,4 +1,4 @@
-import { BaseMetadataStorage, Type } from '@one/core';
+/*import { BaseMetadataStorage, Type } from '@one/core';
 
 import { PropMetadata, ElementMetadata, StateMetadata, ViewChildMetadata } from './interfaces';
 import { COMPONENT_METADATA } from './tokens';
@@ -38,4 +38,4 @@ export class MetadataStorage extends BaseMetadataStorage {
     this.props.clear();
     this.elements.clear();
   }
-}
+}*/

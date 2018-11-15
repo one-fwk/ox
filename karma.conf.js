@@ -1,5 +1,3 @@
-// sudo apt install chromium-browser
-// Need to support WSL ;)
 process.env.CHROMIUM_BIN = require('puppeteer').executablePath();
 
 module.exports = (config) => {
@@ -36,6 +34,5 @@ module.exports = (config) => {
       }
     },
     concurrency: Infinity,
-    autoWatch: true,
   });
 };

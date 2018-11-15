@@ -1,4 +1,4 @@
-import { cssToDom, defineName, toArray } from './util';
+/*import { cssToDom, defineName, toArray } from './util';
 import { IComponent, IComponentData } from './interfaces';
 import { MetadataStorage } from './metadata-storage';
 import { Type } from '@one/core';
@@ -123,4 +123,4 @@ export function createComponentElement({
 
     customElements.define(selector, ComponentElement);
   });
-}
+}*/

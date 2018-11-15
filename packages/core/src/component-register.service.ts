@@ -1,7 +1,7 @@
-import { Inject, Injectable, Injector, Type } from '@one/core';
+/*import { Inject, Injectable, Injector, Type } from '@one/core';
 
-import { createComponentElement } from './create-component-element';
-import { MetadataStorage } from './metadata-storage';
+// import { createComponentElement } from './create-component-element';
+// import { MetadataStorage } from './metadata-storage';
 
 // Use Zone.js for observing changes to component state
 @Injectable()
@@ -18,4 +18,4 @@ export class ComponentRegisterService {
       metadata,
     });
   }
-}
+}*/

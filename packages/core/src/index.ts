@@ -1,4 +1,4 @@
-export { h } from 'dom-chef';
+// export { h } from 'dom-chef';
 
-export * from './decorators';
-export * from './component.module';
+// export * from './decorators';
+// export * from './component.module';

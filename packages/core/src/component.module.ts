@@ -1,4 +1,4 @@
-import { APP_INIT, DynamicModule, Injector, Module, MODULE_INIT, ModuleWithProviders, Type } from '@one/core';
+/*import { APP_INIT, DynamicModule, Injector, Module, MODULE_INIT, ModuleWithProviders, Type } from '@one/core';
 
 import { ComponentRegisterService } from './component-register.service';
 import { MetadataStorage } from './metadata-storage';
@@ -53,4 +53,4 @@ export class ComponentModule {
       ],
     };
   }
-}
+}*/

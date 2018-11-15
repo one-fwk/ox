@@ -1,4 +1,4 @@
-import { h, Component, Element, ViewChild, Prop } from '@onex/core';
+/*import { h, Component, Element, ViewChild, Prop } from '@onex/core';
 import { expectError, getChildNodes } from '@onex/core/util';
 import { Test } from '@one/testing';
 
@@ -106,4 +106,4 @@ describe('ComponentRegisterService', () => {
       document.body.appendChild(<app-root />);
     }).not.toThrow();
   });
-});
+});*/
