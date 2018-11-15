@@ -1,6 +1,13 @@
+/**
+ * Modified from Stencil
+ *
+ * Licensed under the MIT License
+ * https://github.com/ionic-team/stencil/blob/master/LICENSE
+ */
+
 import { VNode } from '../interfaces';
 
-export function toVNode(node: Node): VNode {
+export function toVNode(node: any): VNode {
   if (node.nodeType === 1 || node.nodeType === 3) {
     const vnode: VNode = {};
     vnode.elm = node;

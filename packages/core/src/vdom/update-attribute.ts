@@ -1,3 +1,10 @@
+/**
+ * Modified from Stencil
+ *
+ * Licensed under the MIT License
+ * https://github.com/ionic-team/stencil/blob/master/LICENSE
+ */
+
 import { Utils } from '@one/core';
 
 import { XLINK_NS } from '../constants';

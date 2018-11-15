@@ -1,3 +1,9 @@
+/**
+ * Modified from Stencil
+ *
+ * Licensed under the MIT License
+ * https://github.com/ionic-team/stencil/blob/master/LICENSE
+ */
 import { ComponentRegistry } from '../../platform';
 import { Patch } from '../patch.service';
 import { VNode } from '../../interfaces';
