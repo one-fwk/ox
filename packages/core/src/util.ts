@@ -1,4 +1,6 @@
 import { Utils } from '@one/core';
+import { ComponentMeta } from './interfaces';
+import { DEFAULT_STYLE_MODE } from './constants';
 
 export function cssToDom(css: string) {
   const style = document.createElement('style');
@@ -9,6 +11,8 @@ export function cssToDom(css: string) {
 export function toArray<T>(item: T): T[] {
   return Array.isArray(item) ? item : [item];
 }
+
+export const isDef = (v: any) => v != null;
 
 export function defineName(target: any, name: string) {
   Object.defineProperty(target, 'name', {
@@ -42,6 +46,15 @@ export async function expectError(fn: () => Promise<any>, expected = Error) {
 
 export function parseClassList(value: string | undefined | null): string[] {
   return (Utils.isNil(value) || value === '') ? [] : value.trim().split(/\s+/);
+}
+
+export function getScopeId(cmpMeta: ComponentMeta, mode?: string) {
+  return ('sc-' + cmpMeta.tagNameMeta) + ((mode && mode !== DEFAULT_STYLE_MODE) ? '-' + mode : '');
+}
+
+
+export function getElementScopeId(scopeId: string, isHostElement?: boolean) {
+  return scopeId + (isHostElement ? '-h' : '-s');
 }
 
 /**

@@ -2,9 +2,10 @@ import { Injectable, Utils } from '@one/core';
 
 import { Encapsulation, HostElement, RenderNode, VNode } from '../interfaces';
 import { EMPTY_OBJ, NODE_TYPE, PROP_TYPE, SVG_NS } from '../constants';
-import { parseClassList, setProperty } from '../util';
+import { isDef, parseClassList, setProperty } from '../util';
 import { updateAttribute } from './update-attribute';
 import { ComponentRegistry } from '../platform';
+import { isSameVNode } from './to-vnode';
 
 export interface RelocateNode {
   slotRefNode: RenderNode;
@@ -12,7 +13,7 @@ export interface RelocateNode {
 }
 
 @Injectable()
-export class Patch {
+export class PatchService {
   private checkSlotFallbackVisibility: boolean;
   private relocateNodes = new Set<RelocateNode>();
   private useNativeShadowDom: boolean;
@@ -25,17 +26,6 @@ export class Patch {
   private ssrId: number;
 
   constructor(private readonly cmpRegistry: ComponentRegistry) {}
-
-  private isSameVNode(vnode1: VNode, vnode2: VNode) {
-    // compare if two vnode to see if they're "technically" the same
-    // need to have the same element tag, and same key to be the same
-    if (vnode1.vtag === vnode2.vtag && vnode1.vkey === vnode2.vkey) {
-      return vnode1.vtag === 'slot'
-        ? vnode1.vname === vnode2.vname
-        : true;
-    }
-    return false;
-  }
 
   private createRelocateNode(
     slotRefNode: RenderNode,
@@ -140,17 +130,17 @@ export class Patch {
       } else if (newEndVNode == null) {
         newEndVNode = newCh[--newEndIdx];
 
-      } else if (this.isSameVNode(oldStartVNode, newStartVNode)) {
+      } else if (isSameVNode(oldStartVNode, newStartVNode)) {
         this.patchVNode(oldStartVNode, newStartVNode);
         oldStartVNode = oldCh[++oldStartIdx];
         newStartVNode = newCh[++newStartIdx];
 
-      } else if (this.isSameVNode(oldEndVNode, newEndVNode)) {
+      } else if (isSameVNode(oldEndVNode, newEndVNode)) {
         this.patchVNode(oldEndVNode, newEndVNode);
         oldEndVNode = oldCh[--oldEndIdx];
         newEndVNode = newCh[--newEndIdx];
 
-      } else if (this.isSameVNode(oldStartVNode, oldEndVNode)) {
+      } else if (isSameVNode(oldStartVNode, oldEndVNode)) {
         // VNode moved right
         if (oldStartVNode.vtag === 'slot' || newEndVNode.vtag === 'slot') {
           this.putBackInOriginalLocation(oldStartVNode.elm.parentNode);
@@ -160,7 +150,7 @@ export class Patch {
         oldStartVNode = oldCh[++oldStartIdx];
         newEndVNode = newCh[--newEndIdx];
 
-      } else if (this.isSameVNode(oldEndVNode, newStartVNode)) {
+      } else if (isSameVNode(oldEndVNode, newStartVNode)) {
         // VNode moved left
         if (oldStartVNode.vtag === 'slot' || newEndVNode.vtag === 'slot') {
           this.putBackInOriginalLocation(oldEndVNode.elm.parentNode);
@@ -174,13 +164,13 @@ export class Patch {
         // createKeyToOldIdx
         idxInOld = null;
         for (i = oldStartIdx; i <= oldEndIdx; ++i) {
-          if (oldCh[i] && !Utils.isUndefined(oldCh[i].vkey) && oldCh[i].vkey === newStartVNode.vkey) {
+          if (oldCh[i] && isDef(oldCh[i].vkey) && oldCh[i].vkey === newStartVNode.vkey) {
             idxInOld = i;
             break;
           }
         }
 
-        if (idxInOld) {
+        if (isDef(idxInOld)) {
           elmToMove = oldCh[idxInOld];
 
           if (elmToMove.vtag !== newStartVNode.vtag) {
@@ -459,7 +449,7 @@ export class Patch {
       }
     }
 
-    if (!Utils.isUndefined(newVNode.vtext)) {
+    if (isDef(newVNode.vtext)) {
       // create text node
       newVNode.elm = document.createTextNode(newVNode.vtext) as any;
     } else if (newVNode.isSlotReference) {
@@ -481,7 +471,7 @@ export class Patch {
       // add css classes, attrs, props, listeners, etc.
       this.updateElement(null, newVNode);
 
-      if (!Utils.isUndefined(this.scopeId) && elm['s-si'] !== this.scopeId) {
+      if (isDef(this.scopeId) && elm['s-si'] !== this.scopeId) {
         // if there is a scopeId and this is the initial render
         // then let's add the scopeId as an attribute
         elm.classList.add((elm['s-si'] = this.scopeId));
@@ -546,7 +536,7 @@ export class Patch {
 
     for (; startIdx <= endIdx; ++startIdx) {
       if (vnodes[startIdx]) {
-        childNode = !Utils.isUndefined(vnodes[startIdx].vtext)
+        childNode = isDef(vnodes[startIdx].vtext)
           ? document.createTextNode(vnodes[startIdx].vtext)
           : this.createElm(null, parentVNode, startIdx, parentElm);
 
@@ -560,7 +550,7 @@ export class Patch {
 
   private removeVNodes(vnodes: VNode[], startIdx: number, endIdx: number, node?: RenderNode) {
     for (; startIdx <= endIdx; ++startIdx) {
-      if (!Utils.isUndefined(vnodes[startIdx])) {
+      if (isDef(vnodes[startIdx])) {
         node = vnodes[startIdx].elm;
 
         // we're removing this element
@@ -607,7 +597,6 @@ export class Patch {
           // then hide it if there are other slots in the light dom
           childNode.hidden = false;
 
-
           for (j = 0; j < ilen; j++) {
             if (childNodes[j]['s-hn'] !== childNode['s-hn']) {
               // this sibling node is from a different component
@@ -646,12 +635,12 @@ export class Patch {
     const newChildren = newVNode.vchildren;
 
     this.isSvgMode = newVNode.elm &&
-      !Utils.isNil(newVNode.elm.parentElement) &&
-      !Utils.isNil(((newVNode.elm as any) as SVGElement).ownerSVGElement);
+      isDef(newVNode.elm.parentElement) &&
+      !Utils.isUndefined(((newVNode.elm as any) as SVGElement).ownerSVGElement);
 
     this.isSvgMode = newVNode.vtag === 'svg' ? true : (newVNode.vtag === 'foreignObject' ? false : this.isSvgMode);
 
-    if (Utils.isUndefined(newVNode.vtext)) {
+    if (!isDef(newVNode.vtext)) {
       // element node
       if (newVNode.vtag !== 'slot') {
         // either this is the first render of an element OR it's an update
@@ -660,20 +649,21 @@ export class Patch {
         this.updateElement(oldVNode, newVNode);
       }
 
-      if (!Utils.isUndefined(oldChildren) && !Utils.isUndefined(newChildren)) {
+      if (isDef(oldChildren) && isDef(newChildren)) {
         // looks like there's child vnodes for both the old and new vnodes
         this.updateChildren(elm, oldChildren, newVNode, newChildren);
 
-      } else if (!Utils.isUndefined(newChildren)) {
-        if (!Utils.isUndefined(oldVNode.vtext)) {
+      } else if (isDef(newChildren)) {
+        if (isDef(oldVNode.vtext)) {
           // the old vnode was text, so be sure to clear it out
           elm.textContent = '';
         }
 
         this.addVNodes(elm, null, newVNode, newChildren, 0, newChildren.length - 1);
 
-      } else if (!Utils.isUndefined(oldChildren)) {
+      } else if (isDef(oldChildren)) {
         this.removeVNodes(oldChildren, 0, oldChildren.length - 1);
+
       }
     } else if (defaultHolder = (elm['s-cr'] as any)) {
       // this element has slotted content
@@ -709,6 +699,9 @@ export class Patch {
     parentNodeRef?: Node,
     insertBeforeNode?: Node
   ) {
+    // patchVNode() is synchronous
+    // so it is safe to set these variables and internally
+    // the same patch() call will reference the same data
     this.hostElm = hostElm;
     this.hostTagName = hostElm.tagName;
     this.contentRef = hostElm['s-cr'];

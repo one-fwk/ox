@@ -7,6 +7,17 @@
 
 import { VNode } from '../interfaces';
 
+export function isSameVNode(vnode1: VNode, vnode2: VNode) {
+  // compare if two vnode to see if they're "technically" the same
+  // need to have the same element tag, and same key to be the same
+  if (vnode1.vtag === vnode2.vtag && vnode1.vkey === vnode2.vkey) {
+    return vnode1.vtag === 'slot'
+      ? vnode1.vname === vnode2.vname
+      : true;
+  }
+  return false;
+}
+
 export function toVNode(node: any): VNode {
   if (node.nodeType === 1 || node.nodeType === 3) {
     const vnode: VNode = {};

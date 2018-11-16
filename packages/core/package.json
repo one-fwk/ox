@@ -2,7 +2,6 @@
   "name": "@onex/core",
   "version": "0.0.1",
   "dependencies": {
-    "@one/core": "^1.1.1",
-    "dom-chef": "^3.3.0"
+    "@one/core": "^1.1.1"
   }
 }
