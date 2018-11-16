@@ -1,4 +1,3 @@
-import { Utils } from '@one/core';
 import { ComponentMeta } from './interfaces';
 import { DEFAULT_STYLE_MODE } from './constants';
 
@@ -25,12 +24,17 @@ export function defineName(target: any, name: string) {
   return target;
 }
 
-export function getChildNodes(node: Node) {
+export function getChildNodes(node: Node): Node[] {
   const children = [];
 
   node.childNodes.forEach(child => children.push(child));
 
   return children;
+}
+
+export function expectClasses(elm: Element, classes: string[]) {
+  return expect(elm.className.split(' '))
+    .toEqual(jasmine.arrayContaining(classes));
 }
 
 export async function expectError(fn: () => Promise<any>, expected = Error) {
@@ -45,13 +49,12 @@ export async function expectError(fn: () => Promise<any>, expected = Error) {
 }
 
 export function parseClassList(value: string | undefined | null): string[] {
-  return (Utils.isNil(value) || value === '') ? [] : value.trim().split(/\s+/);
+  return (!value || value === '') ? [] : value.trim().split(/\s+/);
 }
 
 export function getScopeId(cmpMeta: ComponentMeta, mode?: string) {
   return ('sc-' + cmpMeta.tagNameMeta) + ((mode && mode !== DEFAULT_STYLE_MODE) ? '-' + mode : '');
 }
-
 
 export function getElementScopeId(scopeId: string, isHostElement?: boolean) {
   return scopeId + (isHostElement ? '-h' : '-s');

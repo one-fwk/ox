@@ -40,11 +40,10 @@ describe('event listeners', () => {
 
     const vnode2 =
       <div onClick={() => result.push(2)}>
-        <a href="#">Click my parent</a>
+        <a href="#">Click my parent2</a>
       </div>;
 
     hostElm = renderer.patch(hostElm, vnode0, vnode1).elm;
-    console.log(hostElm);
     hostElm.click();
 
     hostElm = renderer.patch(hostElm, vnode1, vnode2).elm;
@@ -70,7 +69,7 @@ describe('event listeners', () => {
     expect(result.length).toBe(2);
 
     const vnode2 =
-      <div o={}>
+      <div o={{}}>
         <a href="#">Click my parent</a>
       </div>;
 

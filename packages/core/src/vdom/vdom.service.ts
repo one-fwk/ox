@@ -1,11 +1,22 @@
 import { Injectable, Utils } from '@one/core';
 
-import { Encapsulation, HostElement, RenderNode, VNode } from '../interfaces';
-import { EMPTY_OBJ, NODE_TYPE, PROP_TYPE, SVG_NS } from '../constants';
-import { isDef, parseClassList, setProperty } from '../util';
+import { EMPTY_OBJ, NODE_TYPE, PROP_TYPE, RUNTIME_ERROR, SVG_NS } from '../constants';
+import { getElementScopeId, isDef, parseClassList, setProperty } from '../util';
 import { updateAttribute } from './update-attribute';
-import { ComponentRegistry } from '../platform';
+import { PlatformService } from '../platform';
 import { isSameVNode } from './to-vnode';
+import { StyleService } from '../styles';
+import { h } from './h';
+import {
+  ComponentConstructorProperties,
+  ComponentInstance,
+  ComponentMeta,
+  Encapsulation,
+  HostElement,
+  RenderNode,
+  VNode,
+  VNodeData,
+} from '../interfaces';
 
 export interface RelocateNode {
   slotRefNode: RenderNode;
@@ -13,7 +24,7 @@ export interface RelocateNode {
 }
 
 @Injectable()
-export class PatchService {
+export class VDomService {
   private checkSlotFallbackVisibility: boolean;
   private relocateNodes = new Set<RelocateNode>();
   private useNativeShadowDom: boolean;
@@ -23,9 +34,11 @@ export class PatchService {
   private hostTagName: string;
   private isSvgMode = false;
   private scopeId: string;
-  private ssrId: number;
 
-  constructor(private readonly cmpRegistry: ComponentRegistry) {}
+  constructor(
+    private readonly platform: PlatformService,
+    private readonly style: StyleService,
+  ) {}
 
   private createRelocateNode(
     slotRefNode: RenderNode,
@@ -82,10 +95,6 @@ export class PatchService {
 
                 // add to our list of nodes to relocate
                 this.relocateNodes.add(relocatedNode);
-                /*this.relocateNodes.add({
-                  slotRefNode: childNode,
-                  nodeToRelocate: node,
-                });*/
               }
             }
           }
@@ -233,8 +242,8 @@ export class PatchService {
         const toAdd = newList.filter(item =>
           !oldList.includes(item) && !classList.includes(item)
         );
-        classList.push(...toAdd);
 
+        classList.push(...toAdd);
         elm.className = classList.join(' ');
       }
     } else if (memberName === 'style') {
@@ -284,10 +293,9 @@ export class PatchService {
           // add listener
           elm.addEventListener(memberName, newValue);
         }
-      } else /*if (_BUILD_.updatable)*/ {
+      } else {
         // remove listener
         elm.removeEventListener(memberName, oldValue);
-        // plt.domApi.$removeEventListener(elm, memberName);
       }
     } else if (memberName !== 'list' && memberName !== 'type' && !this.isSvgMode &&
       (memberName in elm || (['object', 'function'].includes(typeof newValue)) && newValue !== null)) {
@@ -295,7 +303,7 @@ export class PatchService {
       // - list and type are attributes that get applied as values on the element
       // - all svgs get values as attributes not props
       // - check if elm contains name or if the value is array, object, or function
-      const cmpMeta = this.cmpRegistry.get(elm.tagName);
+      const cmpMeta = this.platform.cmpRegistry.get(elm);
       if (cmpMeta && cmpMeta.membersMeta && cmpMeta.membersMeta[memberName]) {
         // we know for a fact that this element is a known component
         // and this component has this member name as a property,
@@ -339,6 +347,7 @@ export class PatchService {
     const elm = (newVnode.elm.nodeType === NODE_TYPE.DocumentFragment && newVnode.elm.host)
       ? newVnode.elm.host
       : (newVnode.elm as any);
+
     const oldVnodeAttrs = (oldVnode && oldVnode.vattrs) || EMPTY_OBJ;
     const newVnodeAttrs = newVnode.vattrs || EMPTY_OBJ;
 
@@ -429,7 +438,6 @@ export class PatchService {
       // remember for later we need to check to relocate nodes
       this.checkSlotRelocate = true;
 
-
       if (newVNode.vtag === 'slot') {
         if (this.scopeId) {
           // scoped css needs to add its scoped id to the parent element
@@ -460,7 +468,7 @@ export class PatchService {
         ? document.createElementNS(SVG_NS, <string>newVNode.vtag)
         : document.createElement(newVNode.isSlotFallback ? 'slot-fb' : <string>newVNode.vtag)) as any;
 
-      if (this.cmpRegistry.has(elm.tagName)) {
+      if (this.platform.cmpRegistry.has(elm)) {
         // plt.isCmpReady.delete(hostElm);
       }
 
@@ -686,6 +694,17 @@ export class PatchService {
     }
   }
 
+  private reflectInstanceValuesToHostAttributes(
+    properties: ComponentConstructorProperties,
+    instance: ComponentInstance,
+  ) {
+    return Object.keys(properties || [])
+      .reduce((reflectHostAttr, memberName) => ({
+        ...reflectHostAttr,
+        [memberName]: instance[memberName],
+      }), {} as VNodeData);
+  }
+
   public patch(
     hostElm: HostElement,
     oldVNode: VNode,
@@ -745,7 +764,7 @@ export class PatchService {
 
         orgLocationNode = nodeToRelocate['s-ol'];
 
-        while (orgLocationNode = orgLocationNode.nextSibling as any) {
+        while (orgLocationNode = orgLocationNode.previousSibling as any) {
           if ((refNode = orgLocationNode['s-nr']) && refNode) {
             if (refNode['s-sn'] === nodeToRelocate['s-sn']) {
               if (parentNodeRef === refNode.parentNode) {
@@ -789,5 +808,97 @@ export class PatchService {
 
     // return our new vnode
     return newVNode;
+  }
+
+  public render(
+    cmpMeta: ComponentMeta,
+    hostElm: HostElement,
+    instance: ComponentInstance,
+  ) {
+    try {
+      const { host, encapsulation, properties } = cmpMeta.componentConstructor;
+
+      const useNativeShadowDom = encapsulation === 'shadow' && this.platform.supportsShadowDom;
+
+      const reflectHostAttr = this.reflectInstanceValuesToHostAttributes(properties, instance);
+      let rootElm: HTMLElement = hostElm;
+
+      if (useNativeShadowDom) {
+        rootElm = hostElm.shadowRoot as any;
+      }
+
+      if (!hostElm['s-rn']) {
+        // attach the styles this component needs, if any
+        // this fn figures out if the styles should go in a
+        // shadow root or if they should be global
+        this.style.attachStyles(cmpMeta, hostElm);
+
+        const scopeId = hostElm['s-sc'];
+        if (scopeId) {
+          hostElm.classList.add(getElementScopeId(scopeId, true));
+          if (encapsulation === 'scoped') {
+            hostElm.classList.add(getElementScopeId(scopeId));
+          }
+        }
+      }
+
+      if (instance.render || instance.hostData || reflectHostAttr) {
+        // tell the platform we're actively rendering
+        // if a value is changed within a render() then
+        // this tells the platform not to queue the change
+        this.platform.activeRender = true;
+
+        const vnodeChildren = instance.render && instance.render();
+
+        let vnodeHostData = instance.hostData && instance.hostData();
+
+        if (reflectHostAttr) {
+          vnodeHostData = vnodeHostData ? Object.assign(vnodeHostData, reflectHostAttr) : reflectHostAttr;
+        }
+
+        // tell the platform we're done rendering
+        // now any changes will again queue
+        this.platform.activeRender = false;
+
+        // looks like we've got child nodes to render into this host element
+        // or we need to update the css class/attrs on the host element
+        const hostVNode = h(null, vnodeHostData, vnodeChildren);
+
+        // if we haven't already created a vnode, then we give the renderer the actual element
+        // if this is a re-render, then give the renderer the last vnode we already created
+        const oldVNode = this.platform.vnodeMap.get(hostElm) || ({} as VNode);
+        oldVNode.elm = rootElm;
+
+        /*if (reflectToAttr) {
+          // only care if we're reflecting values to the host element
+          hostVNode.ishost = true;
+        }*/
+
+        // each patch always gets a new vnode
+        // the host element itself isn't patched because it already exists
+        // kick off the actual render and any DOM updates
+        this.platform.vnodeMap.set(hostElm, this.patch(
+          hostElm,
+          oldVNode,
+          hostVNode,
+          useNativeShadowDom,
+          encapsulation,
+        ));
+
+        // it's official, this element has rendered
+        hostElm['s-rn'] = true;
+
+        /*if (hostElm['s-rc']) {
+          // ok, so turns out there are some child host elements
+          // waiting on this parent element to load
+          // let's fire off all update callbacks waiting
+          hostElm['s-rc'].forEach(cb => cb());
+          hostElm['s-rc'] = null;
+        }*/
+      }
+    } catch (e) {
+      this.platform.activeRender = false;
+      console.error(e, RUNTIME_ERROR.RenderError, hostElm, true);
+    }
   }
 }

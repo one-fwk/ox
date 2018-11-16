@@ -2,7 +2,7 @@ import { RenderNode } from './render.interface';
 import { VNodeData } from './vdom.interface';
 import { StylesMeta } from './style.interface';
 
-import { PROP_TYPE } from '../constants';
+import { ENCAPSULATION, PROP_TYPE } from '../constants';
 
 export interface ComponentConstructor {
   is?: string;
@@ -30,14 +30,9 @@ export interface ComponentMeta {
   membersMeta?: MembersMeta;
   eventsMeta?: EventMeta[];
   listenersMeta?: ListenMeta[];
-  hostMeta?: HostMeta;
-  encapsulationMeta?: number;
-  assetsDirsMeta?: AssetsMeta[];
+  encapsulationMeta?: ENCAPSULATION;
   componentConstructor?: ComponentConstructor;
   componentClass?: string;
-  dependencies?: ComponentDependencies;
-  jsdoc?: JsDoc;
-  styleDocs?: StyleDoc[];
   hmrLoad?: () => void;
 }
 
@@ -517,7 +512,7 @@ export interface ComponentInstance {
    *
    * componentDidLoad will only be called once.
    */
-  componentDidLoad?: () => void;
+  componentDidLoad?: () => Promise<void> | void;
 
   /**
    * The component is about to update and re-render.
@@ -538,7 +533,7 @@ export interface ComponentInstance {
    * componentWillUpdate is not called on the
    * first render.
    */
-  componentDidUpdate?: () => void;
+  componentDidUpdate?: () => Promise<void> | void;
 
   /**
    * The component did unload and the element
