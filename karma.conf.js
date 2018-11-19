@@ -12,7 +12,8 @@ module.exports = (config) => {
       'packages/**/*.+(ts|tsx)': ['karma-typescript'],
     },
     files: [
-      'packages/**/*.+(ts|tsx)'],
+      'packages/**/*.+(ts|tsx)'
+    ],
     plugins: [
       'karma-jasmine',
       'karma-chrome-launcher',

@@ -2,7 +2,7 @@ import { RenderNode } from './render.interface';
 import { VNodeData } from './vdom.interface';
 import { StylesMeta } from './style.interface';
 
-import { ENCAPSULATION, PROP_TYPE } from '../constants';
+import { ENCAPSULATION, MEMBER_TYPE, PROP_TYPE } from '../constants';
 
 export interface ComponentConstructor {
   is?: string;
@@ -57,13 +57,12 @@ export interface MembersMeta {
 
 
 export interface MemberMeta {
-  memberType?: number;
+  memberType?: MEMBER_TYPE;
   propType?: PROP_TYPE;
   attribName?: string;
   attribType?: AttributeTypeInfo;
   reflectToAttrib?: boolean;
   ctrlId?: string;
-  jsdoc?: JsDoc;
   watchCallbacks?: string[];
 }
 

@@ -10,8 +10,8 @@
     ]
   },
   "include": [
-    "packages/**/*.spec.ts",
-    "packages/**/*.spec.tsx",
+    "packages/**/*.ts",
+    "packages/**/*.tsx",
     "**/*.d.ts"
   ]
 }

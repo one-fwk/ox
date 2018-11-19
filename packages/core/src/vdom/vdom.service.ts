@@ -36,7 +36,7 @@ export class VDomService {
   private scopeId: string;
 
   constructor(
-    private readonly platform: PlatformService,
+    private readonly plt: PlatformService,
     private readonly style: StyleService,
   ) {}
 
@@ -303,7 +303,7 @@ export class VDomService {
       // - list and type are attributes that get applied as values on the element
       // - all svgs get values as attributes not props
       // - check if elm contains name or if the value is array, object, or function
-      const cmpMeta = this.platform.cmpRegistry.get(elm);
+      const cmpMeta = this.plt.reg.getCmpMeta(elm);
       if (cmpMeta && cmpMeta.membersMeta && cmpMeta.membersMeta[memberName]) {
         // we know for a fact that this element is a known component
         // and this component has this member name as a property,
@@ -468,8 +468,8 @@ export class VDomService {
         ? document.createElementNS(SVG_NS, <string>newVNode.vtag)
         : document.createElement(newVNode.isSlotFallback ? 'slot-fb' : <string>newVNode.vtag)) as any;
 
-      if (this.platform.cmpRegistry.has(elm)) {
-        // plt.isCmpReady.delete(hostElm);
+      if (this.plt.reg.hasCmpMeta(elm)) {
+        this.plt.reg.isCmpReady.delete(this.hostElm);
       }
 
       this.isSvgMode = newVNode.vtag !== 'svg'
@@ -866,7 +866,7 @@ export class VDomService {
 
         // if we haven't already created a vnode, then we give the renderer the actual element
         // if this is a re-render, then give the renderer the last vnode we already created
-        const oldVNode = this.platform.vnodeMap.get(hostElm) || ({} as VNode);
+        const oldVNode = this.platform.vnodes.get(hostElm) || ({} as VNode);
         oldVNode.elm = rootElm;
 
         /*if (reflectToAttr) {
@@ -877,7 +877,7 @@ export class VDomService {
         // each patch always gets a new vnode
         // the host element itself isn't patched because it already exists
         // kick off the actual render and any DOM updates
-        this.platform.vnodeMap.set(hostElm, this.patch(
+        this.platform.vnodes.set(hostElm, this.patch(
           hostElm,
           oldVNode,
           hostVNode,

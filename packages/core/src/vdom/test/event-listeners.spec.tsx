@@ -1,17 +1,19 @@
-import { mockRenderer, RendererService } from '@onex/testing';
+import { mockTestingModule, VDomService } from '@onex/testing';
 import { h } from '../h';
 import { VNode } from '../../interfaces';
 
 describe('event listeners', () => {
   let hostElm: any;
   let vnode0: VNode;
-  let renderer: RendererService;
+  let vdom: VDomService;
 
   beforeEach(async () => {
     hostElm = document.createElement('div');
     vnode0 = {};
     vnode0.elm = hostElm;
-    renderer = await mockRenderer();
+    
+    const test = await mockTestingModule();
+    vdom = test.get(VDomService);
   });
 
   it('attaches click event handler to element', () => {
@@ -24,7 +26,7 @@ describe('event listeners', () => {
         <a href="#">Click my parent</a>
       </div>;
 
-    hostElm = renderer.patch(hostElm, vnode0, vnode).elm;
+    hostElm = vdom.patch(hostElm, vnode0, vnode).elm;
     hostElm.click();
 
     expect(result.length).toBe(1);
@@ -43,10 +45,10 @@ describe('event listeners', () => {
         <a href="#">Click my parent2</a>
       </div>;
 
-    hostElm = renderer.patch(hostElm, vnode0, vnode1).elm;
+    hostElm = vdom.patch(hostElm, vnode0, vnode1).elm;
     hostElm.click();
 
-    hostElm = renderer.patch(hostElm, vnode1, vnode2).elm;
+    hostElm = vdom.patch(hostElm, vnode1, vnode2).elm;
     console.log(hostElm);
     hostElm.click();
 
@@ -62,7 +64,7 @@ describe('event listeners', () => {
         <a href="#">Click my parent</a>
       </div>;
 
-    hostElm = renderer.patch(hostElm, vnode0, vnode1).elm;
+    hostElm = vdom.patch(hostElm, vnode0, vnode1).elm;
     hostElm.click();
     hostElm.click();
 
@@ -73,7 +75,7 @@ describe('event listeners', () => {
         <a href="#">Click my parent</a>
       </div>;
 
-    hostElm = renderer.patch(hostElm, vnode1, vnode2).elm;
+    hostElm = vdom.patch(hostElm, vnode1, vnode2).elm;
     hostElm.click();
     hostElm.click();
 
@@ -90,7 +92,7 @@ describe('event listeners', () => {
         <a onClick={clicked} href="#">Click my parent</a>
       </div>;
 
-    hostElm = renderer.patch(hostElm, vnode0, vnode1).elm;
+    hostElm = vdom.patch(hostElm, vnode0, vnode1).elm;
     hostElm.click();
 
     expect(result.length).toBe(1);

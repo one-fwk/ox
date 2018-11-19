@@ -1,1 +1,1 @@
-export * from './mock-renderer';
+export * from './mock-testing.module';

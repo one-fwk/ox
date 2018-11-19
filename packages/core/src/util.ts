@@ -69,3 +69,5 @@ export function setProperty(elm: any, name: string, value: any) {
     elm[name] = value;
   } catch (e) { }
 }
+
+export function noop() {}
