@@ -1,7 +1,8 @@
 import { Test } from '@one/testing';
 
-import { PlatformModule } from '../platform.module';
-import { PlatformService } from '../platform.service';
+import { PlatformService, PlatformModule, RegistryService } from '../';
+import { Reflector } from '@one/core';
+import { COMPONENT_META } from '@ox/core/collection';
 
 describe('PlatformModule', () => {
   describe('forFeature', () => {
@@ -14,8 +15,9 @@ describe('PlatformModule', () => {
         ],
       }).compile();
 
-      const plt = module.get<PlatformService>(PlatformService);
-      expect(plt.components.has(TestComponent)).toBe(true);
+      const registry = module.get<RegistryService>(RegistryService);
+      //const { tagNameMeta } = Reflector.get(COMPONENT_META, TestComponent);
+      //expect(registry.components.has(TestComponent)).toBe(true);
     });
 
     /*it('should have different injectors', async () => {

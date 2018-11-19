@@ -1,21 +1,23 @@
-import { Abstract, ComponentInstance, ComponentMeta, HostElement, MemberMeta } from '../interfaces';
-import { noop } from '../util';
 import { definePropertyGetterSetter, definePropertyValue } from './proxy-members';
-import { MEMBER_TYPE } from '../constants';
+import { ComponentMeta, HostElement, MemberMeta } from '../interfaces';
 import { PlatformService } from './platform.service';
+import { MEMBER_TYPE } from '../collection';
+import { RendererService } from '../queue';
+import { noop } from '../util';
 
-export type AttrPropsMap = {[attr: string]: string};
+export type AttrProps = { [attr: string]: string };
 
-export class HostElementInstance {
+export class HostElementController {
   constructor(
     private readonly platform: PlatformService,
+    private readonly renderer: RendererService,
     private readonly cmpMeta: ComponentMeta,
     private readonly hostElm: HostElement,
   ) {}
 
-  private attributeChanged(attrPropsMap: AttrPropsMap, attrName: string, newVal: string) {
+  private attributeChanged(attrProps: AttrProps, attrName: string, newVal: string) {
     // look up to see if we have a property wired up to this attribute name
-    const propName = attrPropsMap[attrName.toLowerCase()];
+    const propName = attrProps[attrName.toLowerCase()];
     if (propName) {
       // there is not need to cast the value since, it's already casted when
       // the prop is setted
@@ -23,7 +25,7 @@ export class HostElementInstance {
     }
   }
 
-  private proxy(membersEntries: [string, MemberMeta][]) {
+  private proxyMemberEntries(membersEntries: [string, MemberMeta][]) {
     // create getters/setters on the host element prototype to represent the public API
     // the setters allows us to know when data has changed so we can re-render
     membersEntries.forEach(([memberName, { memberType, propType }]) => {
@@ -54,8 +56,6 @@ export class HostElementInstance {
     // note: these cannot be arrow functions cuz "this" is important here hombre
 
     this.hostElm.connectedCallback = () => {
-      // needs to be done in queue client
-      // const component = this.platform.resolveComponent(this.hostElm);
       // coolsville, our host element has just hit the DOM
     };
 
@@ -63,22 +63,20 @@ export class HostElementInstance {
       // the element has left the builing
     };
 
-    this.hostElm['s-init'] = () => {
+    this.hostElm['ox-init'] = () => {
       // initComponentLoaded(plt, this, hydratedCssClass, perf);
     };
 
-    this.hostElm.forceUpdate = () => {
-      // queueUpdate(plt, this, perf);
-    };
+    this.hostElm.forceUpdate = () => this.renderer.queue(this.hostElm);
 
     if (this.cmpMeta.membersMeta) {
       const entries = Object.entries(this.cmpMeta.membersMeta);
       const attrToProp = entries
         .filter(([, { attribName }]) => attribName)
-        .reduce((attrs, [propName, {attribName}]) => ({
+        .reduce((attrs, [propName, { attribName }]) => ({
           ...attrs,
           [attribName]: propName,
-        }), {} as AttrPropsMap);
+        }), {} as AttrProps);
 
       this.hostElm.attributeChangedCallback = (attrName: string, oldVal: string, newVal: string) => {
         // the browser has just informed us that an attribute
@@ -89,7 +87,7 @@ export class HostElementInstance {
       // add getters/setters to the host element members
       // these would come from the @Prop and @Method decorators that
       // should create the public API to this component
-      this.proxy(entries);
+      this.proxyMemberEntries(entries);
     }
   }
 }

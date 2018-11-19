@@ -1,5 +1,5 @@
 {
-  "name": "@onex/testing",
+  "name": "@ox/testing",
   "version": "0.0.1",
   "dependencies": {
     "@one/core": "^1.1.1",

@@ -1,5 +1,5 @@
 import { ComponentMeta } from './interfaces';
-import { DEFAULT_STYLE_MODE } from './constants';
+import { DEFAULT_STYLE_MODE } from './collection/constants';
 
 export function cssToDom(css: string) {
   const style = document.createElement('style');

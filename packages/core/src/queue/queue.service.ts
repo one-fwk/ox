@@ -1,47 +1,76 @@
 import { Injectable } from '@one/core';
 
-import { PlatformService } from '../platform';
-import { QueueClient } from './queue-client.service';
-import { ComponentInstance, HostElement } from '../interfaces';
+export interface RafCallback {
+  (timeStamp: number): void;
+}
 
 @Injectable()
-export class Queue {
-  constructor(
-    private readonly queueClient: QueueClient,
-    private readonly plt: PlatformService,
-  ) {}
+export class QueueService {
+  private readonly raf = window.requestAnimationFrame.bind(window);
+  private readonly highPriority = new Set<RafCallback>();
+  private readonly domWrites = new Set<RafCallback>();
+  private readonly domReads = new Set<RafCallback>();
+  private readonly resolved = Promise.resolve();
+  private rafPending = false;
+  private congestion = 0;
 
-  public add(elm: HostElement) {
-    // no longer queued for update
-    // this.plt.reg.isQueuedForUpdate.delete(elm);
+  private flush() {
+    this.congestion++;
 
-    if (!this.plt.reg.isDisconnected.has(elm)) {
-      let ancestorHostElement: HostElement;
-      let instance = this.plt.reg.instances.get(elm);
-      let isInitialLoad = !instance;
+    // always force a bunch of medium callbacks to run, but still have
+    // a throttle on how many can run in a certain time
 
-      if (isInitialLoad) {
-        ancestorHostElement = this.plt.reg.ancestorHostElements.get(elm);
+    // DOM READS!!!
+    this.consume(this.domReads);
 
-        if (ancestorHostElement && !ancestorHostElement['s-rn']) {
-          // this is the intial load
-          // this element has an ancestor host element
-          // but the ancestor host element has NOT rendered yet
-          // so let's just cool our jets and wait for the ancestor to render
-          (ancestorHostElement['s-rc'] = ancestorHostElement['s-rc'] || []).push(() => {
-            // this will get fired off when the ancestor host element
-            // finally gets around to rendering its lazy self
-            this.update(elm);
-          });
-          return;
-        }
+    // DOM WRITES!!!
+    this.consume(this.domWrites);
 
-        // haven't created a component instance for this host element yet!
-        // create the instance from the user's component class
-        // https://www.youtube.com/watch?v=olLxrojmvMg
-        instance = this.plt.createComponent(elm);
-      }
+    if (this.rafPending = ((this.domReads.size + this.domWrites.size) > 0)) {
+      // still more to do yet, but we've run out of time
+      // let's let this thing cool off and try again in the next tick
+      this.raf(() => this.flush());
+    } else {
+      this.congestion = 0;
     }
   }
-  private update(elm: HostElement) {}
+
+  private queueTask(queue: Set<RafCallback>, cb: RafCallback) {
+    // queue dom reads
+    queue.add(cb);
+
+    if (!this.rafPending) {
+      this.raf(() => this.flush());
+    }
+  }
+
+  private consume(queue: Set<RafCallback>) {
+    queue.forEach(cb => {
+      try {
+        cb(performance.now());
+      } catch (e) {
+        console.error(e);
+      }
+    });
+
+    queue.clear();
+  }
+
+  public tick(cb: RafCallback) {
+    // queue high priority work to happen in next tick
+    // uses Promise.resolve() for next tick
+    this.highPriority.add(cb);
+
+    if (this.highPriority.size === 1) {
+      this.resolved.then(() => this.consume(this.highPriority));
+    }
+  }
+
+  public read(cb: RafCallback) {
+    this.queueTask(this.domReads, cb);
+  }
+
+  public write(cb: RafCallback) {
+    this.queueTask(this.domWrites, cb)
+  }
 }

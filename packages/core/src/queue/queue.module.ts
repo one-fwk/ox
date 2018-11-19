@@ -1,18 +1,22 @@
 import { Module } from '@one/core';
 
 import { PlatformModule } from '../platform';
-import { QueueClient } from './queue-client.service';
-import { Queue } from './queue.service';
+import { QueueService } from './queue.service';
+import { RendererService } from './renderer.service';
+import { VDomService } from '../vdom';
 
 @Module({
-  imports: [PlatformModule],
+  imports: [
+    PlatformModule,
+    VDomService,
+  ],
   providers: [
-    QueueClient,
-    Queue,
+    QueueService,
+    RendererService,
   ],
   exports: [
-    QueueClient,
-    Queue,
+    QueueService,
+    RendererService,
   ],
 })
 export class QueueModule {}

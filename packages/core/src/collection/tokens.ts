@@ -1,5 +1,5 @@
 import { InjectionToken } from '@one/core';
-import { ComponentInstance } from './interfaces';
+import { ComponentInstance } from '../interfaces';
 
 export const COMPONENT_META = Symbol.for('COMPONENT_META');
 export const COMPONENT_STATE = Symbol.for('COMPONENT_STATE');

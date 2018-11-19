@@ -2,9 +2,10 @@ import { RenderNode } from './render.interface';
 import { VNodeData } from './vdom.interface';
 import { StylesMeta } from './style.interface';
 
-import { ENCAPSULATION, MEMBER_TYPE, PROP_TYPE } from '../constants';
+import { ENCAPSULATION, MEMBER_TYPE, PROP_TYPE } from '../collection/constants';
+import { TargetRef } from '@one/core';
 
-export interface ComponentConstructor {
+/*export interface ComponentConstructor {
   is?: string;
   properties?: ComponentConstructorProperties;
   events?: ComponentConstructorEvent[];
@@ -15,95 +16,58 @@ export interface ComponentConstructor {
   encapsulation?: Encapsulation;
 }
 
-
 export interface ComponentConstructorHost {
   theme?: string;
   [attrName: string]: string | undefined;
-}
-
+}*/
 
 export interface ComponentMeta {
   // "Meta" suffix to ensure property renaming
   tagNameMeta?: string;
-  bundleIds?: string | BundleIds | GetModuleFn;
+  // bundleIds?: string | BundleIds | GetModuleFn;
   stylesMeta?: StylesMeta;
   membersMeta?: MembersMeta;
   eventsMeta?: EventMeta[];
   listenersMeta?: ListenMeta[];
   encapsulationMeta?: ENCAPSULATION;
-  componentConstructor?: ComponentConstructor;
+  // componentConstructor?: ComponentConstructor;
   componentClass?: string;
   hmrLoad?: () => void;
 }
 
+// export type GetModuleFn = (opts?: GetModuleOptions) => Promise<ComponentConstructor>;
 
-export type GetModuleFn = (opts?: GetModuleOptions) => Promise<ComponentConstructor>;
-
-
-export interface GetModuleOptions {
+/*export interface GetModuleOptions {
   scoped?: boolean;
   mode?: string;
-}
-
+}*/
 
 export interface BundleIds {
   [modeName: string]: string;
 }
 
-
 export interface MembersMeta {
   [memberName: string]: MemberMeta;
 }
 
-
-export interface MemberMeta {
+export interface MemberMeta extends TargetRef {
   memberType?: MEMBER_TYPE;
   propType?: PROP_TYPE;
   attribName?: string;
-  attribType?: AttributeTypeInfo;
   reflectToAttrib?: boolean;
   ctrlId?: string;
   watchCallbacks?: string[];
 }
 
-
-export interface AttributeTypeReference {
-  referenceLocation: 'local' | 'global' | 'import';
-  importReferenceLocation?: string;
-}
-
-export interface AttributeTypeReferences {
-  [key: string]: AttributeTypeReference;
-}
-
-export interface AttributeTypeInfo {
-  text: string;
-  optional: boolean;
-  required: boolean;
-  typeReferences?: AttributeTypeReferences;
-}
-
-
-export interface AssetsMeta {
-  absolutePath?: string;
-  cmpRelativePath?: string;
-  originalComponentPath?: string;
-  originalCollectionPath?: string;
-}
-
-
 export interface HostMeta {
   [key: string]: any;
 }
 
-
 export type Encapsulation = 'shadow' | 'scoped' | 'none';
-
 
 export interface ComponentConstructorProperties {
   [propName: string]: ComponentConstructorProperty;
 }
-
 
 export interface ComponentConstructorProperty {
   attr?: string;
@@ -120,17 +84,7 @@ export interface ComponentConstructorProperty {
 
 export type PropertyType = StringConstructor | BooleanConstructor | NumberConstructor | 'Any';
 
-
-export interface ComponentConstructorEvent {
-  name: string;
-  method: string;
-  bubbles: boolean;
-  cancelable: boolean;
-  composed: boolean;
-}
-
-
-export interface ComponentConstructorListener {
+export interface ListenMeta extends TargetRef {
   name: string;
   method: string;
   capture?: boolean;
@@ -138,56 +92,13 @@ export interface ComponentConstructorListener {
   passive?: boolean;
 }
 
-
-export interface EventMeta {
-  eventName: string;
-  eventMethodName?: string;
-  eventBubbles?: boolean;
-  eventCancelable?: boolean;
-  eventComposed?: boolean;
-  eventType?: AttributeTypeInfo;
-  jsdoc?: JsDoc;
+export interface EventMeta extends TargetRef {
+  mame: string;
+  method: string;
+  bubbles?: boolean;
+  cancelable?: boolean;
+  composed?: boolean;
 }
-
-
-export interface ListenMeta {
-  eventMethodName?: string;
-  eventName?: string;
-  eventCapture?: boolean;
-  eventPassive?: boolean;
-  eventDisabled?: boolean;
-  jsdoc?: JsDoc;
-}
-
-
-export interface JsDoc {
-  name: string;
-  documentation: string;
-  type: string;
-  tags: JSDocTagInfo[];
-  default?: string;
-  parameters?: JsDoc[];
-  returns?: {
-    type: string;
-    documentation: string;
-  };
-}
-
-export interface JSDocTagInfo {
-  name: string;
-  text?: string;
-}
-
-
-export interface StyleDoc {
-  name: string;
-  docs: string;
-  annotation: 'prop';
-}
-
-
-export type ComponentDependencies = string[];
-
 
 export abstract class ComponentModule {
   abstract componentWillLoad?: () => Promise<void> | void;
@@ -210,22 +121,18 @@ export abstract class ComponentModule {
   abstract get properties(): string;
 }
 
-
 export interface ComponentInternalValues {
   [propName: string]: any;
 }
-
 
 export interface ComponentModule {
   new(): ComponentInstance;
 }
 
-
 export interface ComponentRegistry {
   // registry tag must always be lower-case
   [tagName: string]: ComponentMeta;
 }
-
 
 export interface HostElement extends HTMLElement {
   // web component APIs
@@ -242,7 +149,7 @@ export interface HostElement extends HTMLElement {
    * Host Element Id:
    * A unique id assigned to this host element.
    */
-    ['s-id']?: string;
+    ['ox-id']?: string;
 
   /**
    * Content Reference:
@@ -250,49 +157,49 @@ export interface HostElement extends HTMLElement {
    * host element's original content. This comment is used to
    * always represent where host element's light dom is.
    */
-    ['s-cr']?: RenderNode;
+    ['ox-cr']?: RenderNode;
 
   /**
    * Is Active Loading:
    * Array of child host elements that are actively loading.
    */
-    ['s-ld']?: HostElement[];
+    ['ox-ld']?: HostElement[];
 
   /**
    * Has Rendered:
    * Set to true if this component has rendered
    */
-    ['s-rn']?: boolean;
+    ['ox-rn']?: boolean;
 
   /**
    * On Render Callbacks:
    * Array of callbacks to fire off after it has rendered.
    */
-    ['s-rc']?: (() => void)[];
+    ['ox-rc']?: (() => void)[];
 
   /**
    * Scope Id
    * The scope id of this component when using scoped css encapsulation
    * or using shadow dom but the browser doesn't support it
    */
-    ['s-sc']?: string;
+    ['ox-sc']?: string;
 
   /**
    * Component Initial Load:
    * The component has fully loaded, instance creatd,
    * and has rendered. Method is on the host element prototype.
    */
-    ['s-init']?: () => void;
+    ['ox-init']?: () => void;
 
   /**
    * Hot Module Replacement, dev mode only
    */
-    ['s-hmr']?: (versionId: string) => void;
+    ['ox-hmr']?: (versionId: string) => void;
 
   /**
    * Callback method for when HMR finishes
    */
-    ['s-hmr-load']?: () => void;
+    ['ox-hmr-load']?: () => void;
 
   componentOnReady?: () => Promise<this>;
   color?: string;
@@ -303,9 +210,7 @@ export interface ComponentAppliedStyles {
   [tagNameForStyles: string]: boolean;
 }
 
-
 export type OnReadyCallback = ((elm: HostElement) => void);
-
 
 export type ComponentHostData = [
   /**
@@ -338,7 +243,6 @@ export type ComponentHostData = [
    */
   ComponentListenersData[]
   ];
-
 
 export interface ComponentMemberData {
   /**
@@ -399,7 +303,6 @@ export interface ComponentListenersData {
    */
     [4]: number;
 }
-
 
 export interface ComponentEventData {
   /**

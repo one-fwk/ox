@@ -1,9 +1,9 @@
 import { Injectable, Utils } from '@one/core';
 
-import { EMPTY_OBJ, NODE_TYPE, PROP_TYPE, RUNTIME_ERROR, SVG_NS } from '../constants';
+import { EMPTY_OBJ, ENCAPSULATION, NODE_TYPE, PROP_TYPE, RUNTIME_ERROR, SVG_NS } from '../collection';
 import { getElementScopeId, isDef, parseClassList, setProperty } from '../util';
 import { updateAttribute } from './update-attribute';
-import { PlatformService } from '../platform';
+import { PlatformService, RegistryService } from '../platform';
 import { isSameVNode } from './to-vnode';
 import { StyleService } from '../styles';
 import { h } from './h';
@@ -11,7 +11,6 @@ import {
   ComponentConstructorProperties,
   ComponentInstance,
   ComponentMeta,
-  Encapsulation,
   HostElement,
   RenderNode,
   VNode,
@@ -36,7 +35,8 @@ export class VDomService {
   private scopeId: string;
 
   constructor(
-    private readonly plt: PlatformService,
+    private readonly platform: PlatformService,
+    private readonly registry: RegistryService,
     private readonly style: StyleService,
   ) {}
 
@@ -64,16 +64,16 @@ export class VDomService {
     for (i = 0, ilen = childNodes.length; i < ilen; i++) {
       childNode = childNodes[i];
 
-      if (childNode['s-sr'] && (node = childNode['s-cr'])) {
+      if (childNode['ox-sr'] && (node = childNode['ox-cr'])) {
         // first got the content reference comment node
         // then we got it's parent, which is where all the host content is in now
         hostContentNodes = node.parentNode.childNodes;
-        slotNameAttr = childNode['s-sn'];
+        slotNameAttr = childNode['ox-sn'];
 
         for (j = hostContentNodes.length - 1; j >= 0; j--) {
           node = hostContentNodes[j] as RenderNode;
 
-          if (!node['s-cn'] && !node['s-nr'] && node['s-hn'] !== childNode['s-hn']) {
+          if (!node['ox-cn'] && !node['ox-nr'] && node['ox-hn'] !== childNode['ox-hn']) {
             // let's do some relocating to its new home
             // but never relocate a content reference node
             // that is suppose to always represent the original content location
@@ -91,7 +91,7 @@ export class VDomService {
                 // let's make sure we also double check
                 // fallbacks are correctly hidden or shown
                 this.checkSlotFallbackVisibility = true;
-                node['s-sn'] = slotNameAttr;
+                node['ox-sn'] = slotNameAttr;
 
                 // add to our list of nodes to relocate
                 this.relocateNodes.add(relocatedNode);
@@ -303,7 +303,7 @@ export class VDomService {
       // - list and type are attributes that get applied as values on the element
       // - all svgs get values as attributes not props
       // - check if elm contains name or if the value is array, object, or function
-      const cmpMeta = this.plt.reg.getCmpMeta(elm);
+      const cmpMeta = this.registry.getCmpMeta(elm);
       if (cmpMeta && cmpMeta.membersMeta && cmpMeta.membersMeta[memberName]) {
         // we know for a fact that this element is a known component
         // and this component has this member name as a property,
@@ -367,16 +367,16 @@ export class VDomService {
   }
 
   private parentReferenceNode(node: RenderNode) {
-    return (node['s-ol'] ? node['s-ol'] : node).parentNode;
+    return (node['ox-ol'] ? node['ox-ol'] : node).parentNode;
   }
 
   private referenceNode(node: RenderNode) {
-    if (node && node['s-ol']) {
+    if (node && node['ox-ol']) {
       // this node was relocated to a new location in the dom
       // because of some other component's slot
       // but we still have an html comment in place of where
       // it's original location was according to it's original vdom
-      return node['s-ol'];
+      return node['ox-ol'];
     }
     return node;
   }
@@ -393,7 +393,7 @@ export class VDomService {
     for (i = oldSlotChildNodes.length - 1; i >= 0; i--) {
       childNode = oldSlotChildNodes[i] as any;
 
-      if (childNode['s-hn'] !== this.hostTagName && childNode['s-ol']) {
+      if (childNode['ox-hn'] !== this.hostTagName && childNode['ox-ol']) {
         // this child node in the old element is from another component
         // remove this node from the old slot's parent
         childNode.remove();
@@ -407,8 +407,8 @@ export class VDomService {
         // remove the old original location comment entirely
         // later on the patch function will know what to do
         // and move this to the correct spot in need be
-        childNode['s-ol'].remove();
-        childNode['s-ol'] = undefined;
+        childNode['ox-ol'].remove();
+        childNode['ox-ol'] = undefined;
 
         this.checkSlotRelocate = true;
       }
@@ -468,8 +468,8 @@ export class VDomService {
         ? document.createElementNS(SVG_NS, <string>newVNode.vtag)
         : document.createElement(newVNode.isSlotFallback ? 'slot-fb' : <string>newVNode.vtag)) as any;
 
-      if (this.plt.reg.hasCmpMeta(elm)) {
-        this.plt.reg.isCmpReady.delete(this.hostElm);
+      if (this.registry.hasCmpMeta(elm)) {
+        this.registry.isCmpReady.delete(this.hostElm);
       }
 
       this.isSvgMode = newVNode.vtag !== 'svg'
@@ -479,10 +479,10 @@ export class VDomService {
       // add css classes, attrs, props, listeners, etc.
       this.updateElement(null, newVNode);
 
-      if (isDef(this.scopeId) && elm['s-si'] !== this.scopeId) {
+      if (isDef(this.scopeId) && elm['ox-si'] !== this.scopeId) {
         // if there is a scopeId and this is the initial render
         // then let's add the scopeId as an attribute
-        elm.classList.add((elm['s-si'] = this.scopeId));
+        elm.classList.add((elm['ox-si'] = this.scopeId));
       }
 
       if (newVNode.vchildren) {
@@ -504,15 +504,15 @@ export class VDomService {
       }
     }
 
-    newVNode.elm['s-hn'] = this.hostTagName;
+    newVNode.elm['ox-hn'] = this.hostTagName;
 
     if (newVNode.isSlotFallback || newVNode.isSlotReference) {
       // remember the content reference comment
-      newVNode.elm['s-sr'] = true;
+      newVNode.elm['ox-sr'] = true;
       // remember the content reference comment
-      newVNode.elm['s-cr'] = this.contentRef;
+      newVNode.elm['ox-cr'] = this.contentRef;
       // remember the slot name, or empty string for default slot
-      newVNode.elm['s-sn'] = newVNode.vname || '';
+      newVNode.elm['ox-sn'] = newVNode.vname || '';
 
       // check if we've got an old vnode for this slot
       oldVNode = oldParentVNode && oldParentVNode.vchildren && oldParentVNode.vchildren[childIndex];
@@ -536,10 +536,10 @@ export class VDomService {
     containerElm?: RenderNode,
     childNode?: Node,
   ) {
-    const contentRef = parentElm['s-cr'];
-    containerElm = ((contentRef && contentRef.parentNode) || parentElm) as any;
-    if ((containerElm as any).shadowRoot && containerElm.tagName === this.hostTagName) {
-      containerElm = (containerElm as any).shadowRoot;
+    const contentRef = parentElm['ox-cr'];
+    containerElm = <any>((contentRef && contentRef.parentNode) || parentElm);
+    if (containerElm.shadowRoot && containerElm.tagName === this.hostTagName) {
+      containerElm = <any>containerElm.shadowRoot;
     }
 
     for (; startIdx <= endIdx; ++startIdx) {
@@ -549,7 +549,7 @@ export class VDomService {
           : this.createElm(null, parentVNode, startIdx, parentElm);
 
         if (childNode) {
-          vnodes[startIdx].elm = childNode as any;
+          vnodes[startIdx].elm = <any>childNode;
           containerElm.insertBefore(childNode, this.referenceNode(before));
         }
       }
@@ -564,9 +564,9 @@ export class VDomService {
         // we're removing this element
         // so it's possible we need to show slot fallback content now
         this.checkSlotFallbackVisibility = true;
-        if (node['s-ol']) {
+        if (node['ox-ol']) {
           // remove the original location comment
-          node['s-ol'].remove();
+          node['ox-ol'].remove();
         } else {
           // it's possible that child nodes of the node
           // that's being removed are slot nodes
@@ -589,24 +589,24 @@ export class VDomService {
     slotNameAttr?: string,
     nodeType?: NODE_TYPE,
   ) {
-    childNodes = elm.childNodes as any;
+    childNodes = <any>elm.childNodes;
 
     for (i = 0, ilen = childNodes.length; i < ilen; i++) {
       childNode = childNodes[i];
 
       if (childNode.nodeType === NODE_TYPE.ElementNode) {
-        if (childNode['s-sr']) {
+        if (childNode['ox-sr']) {
           // this is a slot fallback node
 
           // get the slot name for this slot reference node
-          slotNameAttr = childNode['s-sn'];
+          slotNameAttr = childNode['ox-sn'];
 
           // by default always show a fallback slot node
           // then hide it if there are other slots in the light dom
           childNode.hidden = false;
 
           for (j = 0; j < ilen; j++) {
-            if (childNodes[j]['s-hn'] !== childNode['s-hn']) {
+            if (childNodes[j]['ox-hn'] !== childNode['ox-hn']) {
               // this sibling node is from a different component
               nodeType = childNodes[j].nodeType;
 
@@ -673,7 +673,7 @@ export class VDomService {
         this.removeVNodes(oldChildren, 0, oldChildren.length - 1);
 
       }
-    } else if (defaultHolder = (elm['s-cr'] as any)) {
+    } else if (defaultHolder = (elm['ox-cr'] as any)) {
       // this element has slotted content
       defaultHolder.parentNode.textContent = newVNode.vtext;
     }
@@ -710,7 +710,7 @@ export class VDomService {
     oldVNode: VNode,
     newVNode: VNode,
     useNativeShadowDomVal?: boolean,
-    encapsulation?: Encapsulation,
+    encapsulation?: ENCAPSULATION,
     ssrPatchId?: number,
     i?: number,
     orgLocationNode?: RenderNode,
@@ -723,11 +723,11 @@ export class VDomService {
     // the same patch() call will reference the same data
     this.hostElm = hostElm;
     this.hostTagName = hostElm.tagName;
-    this.contentRef = hostElm['s-cr'];
+    this.contentRef = hostElm['ox-cr'];
     this.useNativeShadowDom = useNativeShadowDomVal;
 
     // get the scopeId
-    this.scopeId = hostElm['s-sc'];
+    this.scopeId = hostElm['ox-sc'];
 
     // always reset
     this.checkSlotRelocate = this.checkSlotFallbackVisibility = false;
@@ -739,14 +739,14 @@ export class VDomService {
       this.relocateSlotContent(newVNode.elm);
 
       this.relocateNodes.forEach(({ nodeToRelocate }) => {
-        if (!nodeToRelocate['s-ol']) {
+        if (!nodeToRelocate['ox-ol']) {
           // add a reference node marking this node's original location
           // keep a reference to this node for later lookups
           orgLocationNode = document.createTextNode('') as any;
-          orgLocationNode['s-nr'] = nodeToRelocate;
+          orgLocationNode['ox-nr'] = nodeToRelocate;
 
           nodeToRelocate.parentNode.insertBefore(
-            (nodeToRelocate['s-ol'] = orgLocationNode),
+            (nodeToRelocate['ox-ol'] = orgLocationNode),
             nodeToRelocate,
           );
         }
@@ -762,13 +762,13 @@ export class VDomService {
         parentNodeRef = slotRefNode.parentNode;
         insertBeforeNode = slotRefNode.nextSibling;
 
-        orgLocationNode = nodeToRelocate['s-ol'];
+        orgLocationNode = nodeToRelocate['ox-ol'];
 
         while (orgLocationNode = orgLocationNode.previousSibling as any) {
-          if ((refNode = orgLocationNode['s-nr']) && refNode) {
-            if (refNode['s-sn'] === nodeToRelocate['s-sn']) {
+          if ((refNode = orgLocationNode['ox-nr']) && refNode) {
+            if (refNode['ox-sn'] === nodeToRelocate['ox-sn']) {
               if (parentNodeRef === refNode.parentNode) {
-                if ((refNode = refNode.nextSibling as any) && refNode && !refNode['s-nr']) {
+                if ((refNode = refNode.nextSibling as any) && refNode && !refNode['ox-nr']) {
                   insertBeforeNode = refNode;
                   break;
                 }
@@ -816,27 +816,27 @@ export class VDomService {
     instance: ComponentInstance,
   ) {
     try {
-      const { host, encapsulation, properties } = cmpMeta.componentConstructor;
+      const { membersMeta, eventsMeta, listenersMeta, encapsulationMeta } = cmpMeta;
 
-      const useNativeShadowDom = encapsulation === 'shadow' && this.platform.supportsShadowDom;
+      const useNativeShadowDom = encapsulationMeta === ENCAPSULATION.ShadowDom && this.platform.supportsShadowDom;
+      const rootElm = <HTMLElement>(useNativeShadowDom ? hostElm.shadowRoot : hostElm);
 
-      const reflectHostAttr = this.reflectInstanceValuesToHostAttributes(properties, instance);
-      let rootElm: HTMLElement = hostElm;
+      const reflectHostAttr = this.reflectInstanceValuesToHostAttributes({
+        ...membersMeta,
+        ...eventsMeta,
+        ...listenersMeta,
+      }, instance);
 
-      if (useNativeShadowDom) {
-        rootElm = hostElm.shadowRoot as any;
-      }
-
-      if (!hostElm['s-rn']) {
+      if (!hostElm['ox-rn']) {
         // attach the styles this component needs, if any
         // this fn figures out if the styles should go in a
         // shadow root or if they should be global
         this.style.attachStyles(cmpMeta, hostElm);
 
-        const scopeId = hostElm['s-sc'];
+        const scopeId = hostElm['ox-sc'];
         if (scopeId) {
           hostElm.classList.add(getElementScopeId(scopeId, true));
-          if (encapsulation === 'scoped') {
+          if (encapsulationMeta === ENCAPSULATION.ScopedCss) {
             hostElm.classList.add(getElementScopeId(scopeId));
           }
         }
@@ -866,7 +866,7 @@ export class VDomService {
 
         // if we haven't already created a vnode, then we give the renderer the actual element
         // if this is a re-render, then give the renderer the last vnode we already created
-        const oldVNode = this.platform.vnodes.get(hostElm) || ({} as VNode);
+        const oldVNode = this.registry.vnodes.get(hostElm) || ({} as VNode);
         oldVNode.elm = rootElm;
 
         /*if (reflectToAttr) {
@@ -877,24 +877,24 @@ export class VDomService {
         // each patch always gets a new vnode
         // the host element itself isn't patched because it already exists
         // kick off the actual render and any DOM updates
-        this.platform.vnodes.set(hostElm, this.patch(
+        this.registry.vnodes.set(hostElm, this.patch(
           hostElm,
           oldVNode,
           hostVNode,
           useNativeShadowDom,
-          encapsulation,
+          encapsulationMeta,
         ));
 
         // it's official, this element has rendered
-        hostElm['s-rn'] = true;
+        hostElm['ox-rn'] = true;
 
-        /*if (hostElm['s-rc']) {
+        if (hostElm['ox-rc']) {
           // ok, so turns out there are some child host elements
           // waiting on this parent element to load
           // let's fire off all update callbacks waiting
-          hostElm['s-rc'].forEach(cb => cb());
-          hostElm['s-rc'] = null;
-        }*/
+          hostElm['ox-rc'].forEach(cb => cb());
+          hostElm['ox-rc'] = null;
+        }
       }
     } catch (e) {
       this.platform.activeRender = false;

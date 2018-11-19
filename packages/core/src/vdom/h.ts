@@ -6,8 +6,14 @@
  *
  * Modified for Stencil's compiler and vdom
  */
-
-import { VNode, FunctionalComponent, FunctionalUtilities, ChildType, PropsType } from '../interfaces';
+import { Utils } from '@one/core';
+import {
+  VNode,
+  FunctionalComponent,
+  FunctionalUtilities,
+  ChildType,
+  PropsType,
+} from '../interfaces';
 
 const stack: any[] = [];
 
@@ -19,7 +25,7 @@ const utils: FunctionalUtilities = {
 export function h(nodeName: string | FunctionalComponent, vnodeData: PropsType, child?: ChildType): VNode;
 export function h(nodeName: string | FunctionalComponent, vnodeData: PropsType, ...children: ChildType[]): VNode;
 export function h(nodeName: any, vnodeData: any) {
-  let children: any[] = null;
+  let vchildren: any[] = null;
   let lastSimple = false;
   let simple = false;
   let i = arguments.length;
@@ -32,18 +38,18 @@ export function h(nodeName: any, vnodeData: any) {
 
   while (stack.length > 0) {
     let child = stack.pop();
-    if (child && child.pop !== undefined) {
+    if (child && Utils.isFunction(child.pop)) {
       for (i = child.length; i--;) {
         stack.push(child[i]);
       }
 
     } else {
-      if (typeof child === 'boolean') {
+      if (Utils.isBoolean(child)) {
         child = null;
       }
 
-      if ((simple = typeof nodeName !== 'function')) {
-        if (child == null) {
+      if ((simple = !Utils.isFunction(nodeName))) {
+        if (Utils.isNil(child)) {
           child = '';
         } else if (typeof child === 'number') {
           child = String(child);
@@ -53,58 +59,56 @@ export function h(nodeName: any, vnodeData: any) {
       }
 
       if (simple && lastSimple) {
-        (children[children.length - 1] as VNode).vtext += child;
+        (vchildren[vchildren.length - 1] as VNode).vtext += child;
 
-      } else if (children === null) {
-        children = [simple ? { vtext: child } as VNode : child];
+      } else if (vchildren === null) {
+        vchildren = [simple ? { vtext: child } as VNode : child];
 
       } else {
-        children.push(simple ? { vtext: child } as VNode : child);
+        vchildren.push(simple ? { vtext: child } as VNode : child);
       }
 
       lastSimple = simple;
     }
   }
 
-  if (vnodeData != null) {
+  if (!Utils.isNil(vnodeData)) {
     // normalize class / classname attributes
     if (vnodeData['className']) {
       vnodeData['class'] = vnodeData['className'];
     }
 
-    if (typeof vnodeData['class'] === 'object') {
-      for ((i as any) in vnodeData['class']) {
-        if (vnodeData['class'][i]) {
-          stack.push(i);
-        }
-      }
+    if (Utils.isObject(vnodeData['class'])) {
+      Object.keys(vnodeData['class']).forEach(key => {
+        stack.push(key)
+      });
 
       vnodeData['class'] = stack.join(' ');
       stack.length = 0;
     }
 
-    if (vnodeData.key != null) {
+    if (!Utils.isNil(vnodeData.key)) {
       vkey = vnodeData.key;
     }
 
-    if (vnodeData.name != null) {
+    if (!Utils.isNil(vnodeData.name)) {
       vname = vnodeData.name;
     }
   }
 
-  if (typeof nodeName === 'function') {
+  if (Utils.isFunction(nodeName)) {
     // nodeName is a functional component
-    return (nodeName as FunctionalComponent<any>)(vnodeData, children || [], utils);
+    return (nodeName as FunctionalComponent<any>)(vnodeData, vchildren || [], utils);
   }
 
   return {
-    vtag: nodeName,
-    vchildren: children,
-    vtext: undefined,
     vattrs: vnodeData,
-    vkey: vkey,
-    vname: vname,
-    elm: undefined,
-    ishost: false
+    vtag: nodeName,
+    ishost: false,
+    vchildren,
+    vname,
+    vkey,
+    // vtext: undefined,
+    // elm: undefined,
   } as VNode;
 }

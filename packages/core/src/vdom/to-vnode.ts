@@ -5,6 +5,7 @@
  * https://github.com/ionic-team/stencil/blob/master/LICENSE
  */
 
+import { NODE_TYPE } from '../collection';
 import { VNode } from '../interfaces';
 
 export function isSameVNode(vnode1: VNode, vnode2: VNode) {
@@ -19,19 +20,19 @@ export function isSameVNode(vnode1: VNode, vnode2: VNode) {
 }
 
 export function toVNode(node: any): VNode {
-  if (node.nodeType === 1 || node.nodeType === 3) {
+  if (
+    node.nodeType === NODE_TYPE.ElementNode ||
+    node.nodeType === NODE_TYPE.TextNode
+  ) {
     const vnode: VNode = {};
     vnode.elm = node;
 
-    if (node.nodeType === 1) {
+    if (node.nodeType === NODE_TYPE.ElementNode) {
       // element node
       vnode.vtag = node.nodeName.toLowerCase();
 
-      const childNodes = node.childNodes;
-      let childVnode: VNode;
-
-      childNodes.forEach(childNode => {
-        childVnode = toVNode(childNode);
+      node.childNodes.forEach(childNode => {
+        const childVnode = toVNode(childNode);
         if (childVnode) {
           (vnode.vchildren = vnode.vchildren || []).push(childVnode);
         }

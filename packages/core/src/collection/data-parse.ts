@@ -1,6 +1,6 @@
 import { isDef } from '../util';
 import { PropertyType } from '../interfaces';
-import { PROP_TYPE } from '../constants';
+import { PROP_TYPE } from './constants';
 
 export const parsePropertyValue = (propType: PropertyType | PROP_TYPE, propValue: any) => {
   // ensure this value is of the correct prop type

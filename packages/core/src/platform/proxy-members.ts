@@ -2,7 +2,7 @@ export const definePropertyValue = (obj: any, propertyKey: string, value: any) =
   // minification shortcut
   Object.defineProperty(obj, propertyKey, {
     configurable: true,
-    value
+    value,
   });
 };
 
@@ -11,6 +11,6 @@ export const definePropertyGetterSetter = (obj: any, propertyKey: string, get: a
   Object.defineProperty(obj, propertyKey, {
     configurable: true,
     get,
-    set
+    set,
   });
 };

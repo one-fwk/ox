@@ -7,7 +7,7 @@
 
 import { Utils } from '@one/core';
 
-import { XLINK_NS } from '../constants';
+import { XLINK_NS } from '../collection';
 
 export function updateAttribute(
   elm: HTMLElement,

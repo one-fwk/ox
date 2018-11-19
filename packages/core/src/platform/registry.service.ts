@@ -1,8 +1,9 @@
-import { Injector } from '@one/core';
-import { Abstract, ComponentInstance, ComponentMeta, HostElement, VNode } from '../interfaces';
+import { Injectable, Injector } from '@one/core';
+import { AbstractComponent, ComponentInstance, ComponentMeta, HostElement, VNode } from '../interfaces';
 
-export class Registry {
-  public readonly components = new Map<string, [Abstract<ComponentInstance>, Injector]>();
+@Injectable()
+export class RegistryService {
+  public readonly components = new Map<string, [AbstractComponent, Injector]>();
   public readonly instances = new WeakMap<HostElement, ComponentInstance>();
   public readonly ancestorHostElements = new WeakMap<HostElement, HostElement>();
   public readonly hasConnected = new WeakMap<HostElement, boolean>();

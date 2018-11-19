@@ -118,26 +118,26 @@ export interface RenderNode extends HostElement {
    * Is Content Reference Node:
    * This node is a content reference node.
    */
-    ['s-cn']?: boolean;
+    ['ox-cn']?: boolean;
 
   /**
    * Is a slot reference node:
    * This is a node that represents where a slots
    * was originally located.
    */
-    ['s-sr']?: boolean;
+    ['ox-sr']?: boolean;
 
   /**
    * Slot name
    */
-    ['s-sn']?: string;
+    ['ox-sn']?: string;
 
   /**
    * Host element tag name:
    * The tag name of the host element that this
    * node was created in.
    */
-    ['s-hn']?: string;
+    ['ox-hn']?: string;
 
   /**
    * Original Location Reference:
@@ -145,22 +145,17 @@ export interface RenderNode extends HostElement {
    * which represents the original location
    * before it was moved to its slot.
    */
-    ['s-ol']?: RenderNode;
+    ['ox-ol']?: RenderNode;
 
   /**
    * Node reference:
    * This is a reference for a original location node
    * back to the node that's been moved around.
    */
-    ['s-nr']?: RenderNode;
+    ['ox-nr']?: RenderNode;
 
   /**
    * Scope Id
    */
-    ['s-si']?: string;
-
-  /**
-   * Scope Id
-   */
-    ['s-si']?: string;
+    ['ox-si']?: string;
 }

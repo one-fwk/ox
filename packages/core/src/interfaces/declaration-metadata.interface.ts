@@ -1,8 +1,5 @@
-import { ModuleMetadata } from '@one/core';
-
-import { ComponentInstance } from './component.interface';
-import { Abstract } from './abstract.interface';
+import { ModuleMetadata, Type } from '@one/core';
 
 export interface DeclarationMetadata extends ModuleMetadata {
-  declarations?: Abstract<ComponentInstance>[];
+  declarations?: Type<any>[];
 }

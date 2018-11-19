@@ -1,7 +1,7 @@
 import { Test } from '@one/testing';
 
-import { PlatformService } from '@onex/core/platform';
-import { VDomService } from '@onex/core/vdom';
+import { PlatformService } from '@ox/core/platform';
+import { VDomService } from '@ox/core/vdom';
 
 export function mockTestingModule() {
   return Test.createTestingModule({

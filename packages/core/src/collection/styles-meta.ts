@@ -1,5 +1,5 @@
 import { ComponentOptions, ModeStyles, StylesMeta } from '../interfaces';
-import { DEFAULT_STYLE_MODE } from '../constants';
+import { DEFAULT_STYLE_MODE } from './constants';
 
 export function getStylesMeta(componentOptions: ComponentOptions) {
   let stylesMeta: StylesMeta = {};

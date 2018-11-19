@@ -1,5 +1,4 @@
 {
-  "name": "onex",
   "private": true,
   "scripts": {
     "test:watch": "karma start --no-single-run --auto-watch",

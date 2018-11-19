@@ -8,7 +8,7 @@ import { mockTestingModule, VDomService } from '@onex/testing';
 import { VNode } from '../../interfaces';
 import { h, toVNode } from '../';
 import { expectClasses, getScopeId } from '../../util';
-import { SVG_NS } from '../../constants';
+import { SVG_NS } from '../../collection/constants';
 
 function prop(name: any) {
   return function(obj: any) {

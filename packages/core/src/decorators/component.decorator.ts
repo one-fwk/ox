@@ -1,9 +1,7 @@
 import { Injectable, Reflector, TransientScope } from '@one/core';
 
+import { COMPONENT_META, ENCAPSULATION, getStylesMeta } from '../collection';
 import { ComponentMeta, ComponentOptions } from '../interfaces';
-import { getStylesMeta } from '../collection';
-import { ENCAPSULATION } from '../constants';
-import { COMPONENT_META } from '../tokens';
 
 export function Component(options: ComponentOptions): ClassDecorator {
   if (!options.selector || options.selector.trim() === '') {

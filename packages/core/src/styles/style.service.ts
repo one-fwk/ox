@@ -1,7 +1,7 @@
 import { Injectable } from '@one/core';
 
 import { ComponentMeta, HostElement } from '../interfaces';
-import { DEFAULT_STYLE_MODE, ENCAPSULATION } from '../constants';
+import { DEFAULT_STYLE_MODE, ENCAPSULATION } from '../collection';
 import { PlatformService } from '../platform';
 import { getScopeId } from '../util';
 
@@ -18,7 +18,7 @@ export class StyleService {
 
     // create the style id w/ the host element's mode
     let styleId = cmpMeta.tagNameMeta + (hostElm.mode || DEFAULT_STYLE_MODE);
-    let styleTemplate = (cmpMeta as any)[styleId];
+    let styleTemplate = cmpMeta[styleId];
 
     const shouldScopeCss = (
       cmpMeta.encapsulationMeta === ENCAPSULATION.ScopedCss ||
@@ -26,7 +26,7 @@ export class StyleService {
         !this.plt.supportsShadowDom)
     );
     if (shouldScopeCss) {
-      hostElm['s-sc'] = styleTemplate
+      hostElm['ox-sc'] = styleTemplate
         ? getScopeId(cmpMeta, hostElm.mode)
         : getScopeId(cmpMeta);
     }
@@ -35,7 +35,7 @@ export class StyleService {
       // doesn't look like there's a style template with the mode
       // create the style id using the default style mode and try again
       styleId = cmpMeta.tagNameMeta + DEFAULT_STYLE_MODE;
-      styleTemplate = (cmpMeta as any)[styleId];
+      styleTemplate = cmpMeta[styleId];
     }
 
     if (styleTemplate) {
@@ -46,10 +46,10 @@ export class StyleService {
         if (cmpMeta.encapsulationMeta === ENCAPSULATION.ShadowDom) {
           // we already know we're in a shadow dom
           // so shadow root is the container for these styles
-          styleContainerNode = hostElm.shadowRoot as any;
+          styleContainerNode = <any>hostElm.shadowRoot;
         } else {
           // climb up the dom and see if we're in a shadow dom
-          const rootEl = (hostElm as any).getRootNode();
+          const rootEl = (<any>hostElm).getRootNode();
           if (rootEl.host) {
             styleContainerNode = rootEl;
           }

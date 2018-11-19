@@ -1,29 +1,50 @@
-import { Injectable, Injector, Reflector } from '@one/core';
+import { Injectable, Injector } from '@one/core';
 
-import { Abstract, ComponentInstance, ComponentMeta, HostElement } from '../interfaces';
-import { HostElementInstance } from './host-element';
-import { Registry } from './registry';
-import { COMPONENT_META } from '../tokens';
+import { AbstractComponent, ComponentInstance, HostElement } from '../interfaces';
+import { HostElementController } from './host-element-controller';
+import { RegistryService } from './registry.service';
+import { RendererService } from '../queue';
+import { Metadata } from '../collection';
 
 @Injectable()
 export class PlatformService {
   public readonly supportsShadowDom = !!document.documentElement.attachShadow;
-  public readonly reg = new Registry();
+  public isAppLoaded = false;
   public activeRender = false;
 
-  public getCmpMetaFromComponent(component: Abstract<ComponentInstance>) {
-    return Reflector.get(COMPONENT_META, component) as ComponentMeta;
+  constructor(
+    private readonly registry: RegistryService,
+    private readonly renderer: RendererService,
+  ) {}
+
+  public onAppInit() {
+    this.isAppLoaded = true;
   }
 
-  public addComponents(components: Abstract<ComponentInstance>[], injector: Injector) {
+  public addComponents(components: AbstractComponent[], injector: Injector) {
     components.forEach(component => {
-      const cmpMeta = this.getCmpMetaFromComponent(component);
+      const cmpMeta = Metadata.getComponentMetadata(component);
 
-      if (!this.reg.components.has(cmpMeta.tagNameMeta)) {
-        this.reg.components.set(cmpMeta.tagNameMeta, [component, injector]);
-        this.reg.cmpMeta.set(cmpMeta.tagNameMeta, cmpMeta);
+      if (!this.registry.components.has(cmpMeta.tagNameMeta) /*!customElements.get(cmpMeta.tagNameMeta)*/) {
+        this.registry.components.set(cmpMeta.tagNameMeta, [component, injector]);
+        this.registry.cmpMeta.set(cmpMeta.tagNameMeta, cmpMeta);
+
+        const hostCtor = class extends HTMLElement {} as any;
+
+        // define the custom element
+        // initialize the members on the host element prototype
+        // keep a ref to the metadata with the tag as the key
+        const hostElmCtrl = new HostElementController(this, this.renderer, cmpMeta, hostCtor.prototype);
+
+        hostCtor.observedAttributes = Object.values(cmpMeta.membersMeta)
+          .map(member => member.attribName)
+          .filter(attribName => !!attribName);
+
+        hostElmCtrl.create();
+
+        customElements.define(cmpMeta.tagNameMeta, hostCtor);
       } else {
-        throw new Error('Component already defined');
+        throw new Error(`Component ${cmpMeta.tagNameMeta} is already declared!`);
       }
     });
   }
@@ -36,37 +57,18 @@ export class PlatformService {
 
   public createComponent(elm: HostElement | HTMLElement) {
     const selector = elm.tagName.toLowerCase();
-    const [, [component, injector]] = [...this.reg.components.entries()]
+    const [, [component, injector]] = [...this.registry.components.entries()]
       .find(([tagName]) => tagName === selector);
 
+    // Should I just resolve it or actually bind it?
     const instance = injector.resolve<ComponentInstance>(component);
 
-    this.reg.instances.set(elm, instance);
+    /*(<Injector>injector).bind(component).toSelf();
+    const instance = injector.get<ComponentInstance>(component);*/
+
+    this.registry.instances.set(elm, instance);
 
     return instance;
-  }
-
-  public onAppInit() {
-    this.reg.components.forEach(([component]) => {
-      const cmpMeta = this.getCmpMetaFromComponent(component);
-
-      if (!customElements.get(cmpMeta.tagNameMeta)) {
-        const hostCtor = class extends HTMLElement {} as any;
-
-        // define the custom element
-        // initialize the members on the host element prototype
-        // keep a ref to the metadata with the tag as the key
-        const hostElement = new HostElementInstance(this, cmpMeta, hostCtor.prototype);
-
-        hostCtor.observedAttributes = Object.values(cmpMeta.membersMeta)
-          .map(member => member.attribName)
-          .filter(attribName => !!attribName);
-
-        hostElement.create();
-
-        customElements.define(cmpMeta.tagNameMeta, hostCtor);
-      }
-    });
   }
 
 }

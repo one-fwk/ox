@@ -1,8 +1,9 @@
 {
-  "name": "@onex/core",
+  "name": "@ox/core",
   "version": "0.0.1",
   "dependencies": {
     "@one/core": "^1.1.1",
+    "@ox/core": "*",
     "@types/jasmine": "^2.8.11",
     "@types/node": "^10.12.6"
   }
