@@ -1,4 +1,4 @@
-import { Metadata } from '../collection';
+import { Metadata } from '@ox/collection';
 
 /**
  * Listen for any event changes

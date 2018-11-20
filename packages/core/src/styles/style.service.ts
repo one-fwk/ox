@@ -1,9 +1,9 @@
 import { Injectable } from '@one/core';
 
-import { ComponentMeta, HostElement } from '../interfaces';
-import { DEFAULT_STYLE_MODE, ENCAPSULATION } from '../collection';
-import { PlatformService } from '../platform';
-import { getScopeId } from '../util';
+import { ComponentMeta, HostElement } from '../../../collection/src/interfaces';
+import { DEFAULT_STYLE_MODE, ENCAPSULATION } from '../../../collection/src/index';
+import { PlatformService } from '../../../platform/src/index';
+import { getScopeId } from '../../../collection/src/util';
 
 @Injectable()
 export class StyleService {

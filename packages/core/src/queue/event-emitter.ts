@@ -1,5 +1,5 @@
-import { HostElement, MemberMeta } from '../interfaces';
-import { PlatformService } from '../platform';
+import { HostElement, MemberMeta } from '@ox/collection';
+import { PlatformService } from '@ox/platform';
 
 export class EventEmitter {
   constructor(

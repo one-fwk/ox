@@ -1,13 +1,22 @@
 import { Injectable } from '@one/core';
 
-import { PlatformService, RegistryService } from '../platform';
+import { PlatformService, RegistryService } from '@ox/platform';
+import { VDomService } from '@ox/vdom';
 import { QueueService } from './queue.service';
-import { MEMBER_TYPE, Metadata, parsePropertyValue, RUNTIME_ERROR } from '../collection';
-import { VDomService } from '../vdom';
-import { ComponentInstance, ComponentMeta, HostElement, HostSnapshotAttributes, MemberMeta } from '../interfaces';
 import { EventEmitter } from './event-emitter';
-import { isDef } from '@ox/core/util';
-import { definePropertyGetterSetter } from '@ox/core/platform/proxy-members';
+import {
+  MEMBER_TYPE,
+  Metadata,
+  RUNTIME_ERROR,
+  parsePropertyValue,
+  definePropertyGetterSetter,
+  isDef,
+  ComponentInstance,
+  ComponentMeta,
+  HostElement,
+  HostSnapshotAttributes,
+  MemberMeta,
+} from '@ox/collection';
 
 @Injectable()
 export class RendererService {

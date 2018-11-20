@@ -1,5 +1,6 @@
 import { TestingModule } from '@one/testing';
-import { OxModule, DeclarationMetadata } from '@ox/core';
+import { OxModule } from '@ox/core';
+import { DeclarationMetadata } from '@ox/collection';
 
 export class Test {
   private static createModule(metadata: DeclarationMetadata) {

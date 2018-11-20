@@ -1,8 +1,8 @@
 import { Reflector } from '@one/core';
 import { Test } from '@ox/testing';
 
-import { RegistryService } from '../../platform';
-import { COMPONENT_META } from '../../collection';
+import { RegistryService } from '../../../../platform/src/index';
+import { COMPONENT_META } from '../../../../collection/src/index';
 import { Component } from '../';
 
 describe('@OxModule()', () => {

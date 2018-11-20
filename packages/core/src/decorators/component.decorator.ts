@@ -1,7 +1,6 @@
 import { Injectable, Reflector } from '@one/core';
 
-import { COMPONENT_META, ENCAPSULATION, getStylesMeta } from '../collection';
-import { ComponentMeta, ComponentOptions } from '../interfaces';
+import { ComponentMeta, ComponentOptions, COMPONENT_META, ENCAPSULATION, getStylesMeta } from '@ox/collection';
 
 export function Component(options: ComponentOptions): ClassDecorator {
   if (!options.selector || options.selector.trim() === '') {

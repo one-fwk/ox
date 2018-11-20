@@ -4,6 +4,7 @@
   "dependencies": {
     "@one/core": "^1.1.1",
     "@one/testing": "^1.1.1",
-    "@ox/core": "*"
+    "@ox/core": "*",
+    "@ox/collection": "*"
   }
 }

@@ -1,5 +1,4 @@
-import { MEMBER_TYPE, Metadata } from '../collection';
-import { EventOptions, PropOptions } from '../interfaces';
+import { MEMBER_TYPE, Metadata, EventOptions, PropOptions } from '@ox/collection';
 
 export function createMemberDecorator<T>(memberType: MEMBER_TYPE) {
   return (options?: T): PropertyDecorator | MethodDecorator => {

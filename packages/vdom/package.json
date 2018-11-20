@@ -1,0 +1,12 @@
+{
+  "name": "@ox/vdom",
+  "version": "0.0.1",
+  "scripts": {
+    "prepublish": "*"
+  },
+  "dependencies": {
+    "@one/core": "^1.1.1",
+    "@ox/platform": "^1.1.1",
+    "@ox/collection": "^1.1.1"
+  }
+}

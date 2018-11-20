@@ -5,7 +5,9 @@
     "prepublish": "*"
   },
   "dependencies": {
-    "@one/core": "^1.1.1"
+    "@one/core": "^1.1.1",
+    "@ox/collection": "*",
+    "@ox/platform": "*"
   },
   "peerDependencies": {
     "@webcomponents/shadydom": "^1.3.1"

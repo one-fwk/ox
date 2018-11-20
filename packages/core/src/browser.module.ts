@@ -1,6 +1,6 @@
 import { APP_INIT, Module } from '@one/core';
 
-import { PlatformModule, PlatformService } from './platform';
+import { PlatformModule, PlatformService } from '@ox/platform';
 
 @Module({
   imports: [PlatformModule],

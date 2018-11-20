@@ -1,4 +1,4 @@
-import { isDisconnected } from '../util';
+import { isDisconnected } from '../../../collection/src/util';
 
 describe('utilities', () => {
   describe('isDisconnected', () => {

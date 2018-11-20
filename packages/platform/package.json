@@ -1,0 +1,13 @@
+{
+  "name": "@ox/platform",
+  "version": "0.0.1",
+  "scripts": {
+    "prepublish": "*"
+  },
+  "dependencies": {
+    "@one/core": "^1.1.1",
+    "@ox/core": "^1.1.1",
+    "@ox/collection": "^1.1.1",
+    "@ox/vdom": "^1.1.1"
+  }
+}
