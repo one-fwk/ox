@@ -108,7 +108,7 @@ export class HostElementController {
     // the setters allows us to know when data has changed so we can re-render
     const self = this;
 
-    membersMeta.forEach(({ memberName, memberType }) => {
+    membersMeta.forEach(({ memberName, memberType }: MemberMeta) => {
       const propType = Object;
 
       if (memberType === MEMBER_TYPE.Prop) {
@@ -298,13 +298,12 @@ export class HostElementController {
 
     if (cmpMeta.membersMeta) {
       const attrProps = Metadata.getMemberProps(cmpMeta)
-        .reduce((attrs, { memberName, attr }) => ({
+        .reduce((attrs, { memberName, attr }: MemberMeta) => ({
           ...attrs,
-          [attr || memberName]: memberName,
+          [attr]: memberName,
         }), {} as AttrProps);
 
       hostElm.attributeChangedCallback = function (attrName: string, oldVal: string, newVal: string) {
-        // wtf the method below doesn't get called???????
         self.attributeChanged(this, attrProps, attrName, newVal);
       };
 

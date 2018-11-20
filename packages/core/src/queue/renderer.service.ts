@@ -58,24 +58,25 @@ export class RendererService {
   ) {
     const hostSnapshot = this.registry.hostSnapshots.get(hostElm);
     const { memberName, memberType, attr, mutable } = memberMeta;
+    const self = this;
 
-    const getComponentProp = () => {
+    function getComponentProp() {
       // component instance prop/state getter
       // get the property value directly from our internal values
-      const values = this.registry.values.get(hostElm);
+      const values = self.registry.values.get(this);
       return values && values[memberName];
-    };
+    }
 
-    const setComponentProp = (newValue: any) => {
+    function setComponentProp(newValue: any) {
       // component instance prop/state setter (cannot be arrow fn)
-      if (hostElm) {
+      if (this) {
         if (memberType === MEMBER_TYPE.State || (memberType === MEMBER_TYPE.Prop && mutable)) {
-          this.platform.setValue(hostElm, memberName, newValue);
+          self.platform.setValue(this, memberName, newValue);
         } else {
-          console.warn(`@Prop() "${memberName}" on "${hostElm.tagName}" cannot be modified.`);
+          console.warn(`@Prop() "${memberName}" on "${this.tagName}" cannot be modified.`);
         }
       }
-    };
+    }
 
     if (memberType & (MEMBER_TYPE.Prop | MEMBER_TYPE.State)) {
       const values = this.registry.values.get(hostElm);
