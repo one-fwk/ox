@@ -29,12 +29,12 @@ module.exports = (config) => {
     colors: true,
     logLevel: config.LOG_INFO,
     browsers: ['WslChromiumHeadless'],
+    concurrency: Infinity,
     customLaunchers: {
       WslChromiumHeadless: {
         base: 'ChromiumHeadless',
         flags: ['--disable-gpu', '--no-sandbox', '--remote-debugging-port=9222'],
       }
     },
-    concurrency: Infinity,
   });
 };

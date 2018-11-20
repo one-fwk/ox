@@ -3,7 +3,7 @@ import { VNodeData } from './vdom.interface';
 import { StylesMeta } from './style.interface';
 
 import { ENCAPSULATION, MEMBER_TYPE, PROP_TYPE } from '../collection/constants';
-import { TargetRef } from '@one/core';
+import { Target, TargetPropertyRef, TargetRef } from '@one/core';
 
 /*export interface ComponentConstructor {
   is?: string;
@@ -23,15 +23,13 @@ export interface ComponentConstructorHost {
 
 export interface ComponentMeta {
   // "Meta" suffix to ensure property renaming
-  tagNameMeta?: string;
-  // bundleIds?: string | BundleIds | GetModuleFn;
+  tagNameMeta: string;
   stylesMeta?: StylesMeta;
-  membersMeta?: MembersMeta;
-  eventsMeta?: EventMeta[];
+  membersMeta?: MemberMeta[];
+  methodsMeta?: MethodMeta[];
   listenersMeta?: ListenMeta[];
+  watchersMeta?: WatchMeta[];
   encapsulationMeta?: ENCAPSULATION;
-  // componentConstructor?: ComponentConstructor;
-  componentClass?: string;
   hmrLoad?: () => void;
 }
 
@@ -46,17 +44,22 @@ export interface BundleIds {
   [modeName: string]: string;
 }
 
-export interface MembersMeta {
-  [memberName: string]: MemberMeta;
+export interface PropOptions {
+  attr?: string;
+  mutable?: boolean;
+  reflect?: boolean;
 }
 
-export interface MemberMeta extends TargetRef {
+export interface EventOptions {
+  bubbles?: boolean;
+  cancelable?: boolean;
+  composed?: boolean;
+}
+
+export interface MemberMeta extends PropOptions, EventOptions {
+  target: Function;
+  memberName: string;
   memberType?: MEMBER_TYPE;
-  propType?: PROP_TYPE;
-  attribName?: string;
-  reflectToAttrib?: boolean;
-  ctrlId?: string;
-  watchCallbacks?: string[];
 }
 
 export interface HostMeta {
@@ -84,20 +87,21 @@ export interface ComponentConstructorProperty {
 
 export type PropertyType = StringConstructor | BooleanConstructor | NumberConstructor | 'Any';
 
-export interface ListenMeta extends TargetRef {
-  name: string;
-  method: string;
+export interface StateMeta extends TargetPropertyRef {}
+
+export interface ListenMeta extends TargetPropertyRef {
+  event: string;
   capture?: boolean;
   disabled?: boolean;
   passive?: boolean;
 }
 
-export interface EventMeta extends TargetRef {
-  mame: string;
-  method: string;
-  bubbles?: boolean;
-  cancelable?: boolean;
-  composed?: boolean;
+export interface ElementMeta extends TargetPropertyRef {}
+
+export interface MethodMeta extends TargetPropertyRef {}
+
+export interface WatchMeta extends TargetPropertyRef {
+  property: string;
 }
 
 export abstract class ComponentModule {
@@ -204,6 +208,7 @@ export interface HostElement extends HTMLElement {
   componentOnReady?: () => Promise<this>;
   color?: string;
   mode?: string;
+  [memberName: string]: any;
 }
 
 export interface ComponentAppliedStyles {

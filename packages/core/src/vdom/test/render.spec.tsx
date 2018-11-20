@@ -1,5 +1,5 @@
-import { mockTestingModule, PlatformService, VDomService } from '@onex/testing';
-import { HostElement } from '@onex/core/interfaces';
+import { mockTestingModule, PlatformService, VDomService } from '@ox/testing';
+import { HostElement } from '../../interfaces';
 
 describe('instance render', () => {
   let hostElm: HostElement;

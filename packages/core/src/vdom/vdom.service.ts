@@ -1,6 +1,15 @@
 import { Injectable, Utils } from '@one/core';
 
-import { EMPTY_OBJ, ENCAPSULATION, NODE_TYPE, PROP_TYPE, RUNTIME_ERROR, SVG_NS } from '../collection';
+import {
+  EMPTY_OBJ,
+  ENCAPSULATION,
+  MEMBER_TYPE,
+  Metadata,
+  NODE_TYPE,
+  PROP_TYPE,
+  RUNTIME_ERROR,
+  SVG_NS,
+} from '../collection';
 import { getElementScopeId, isDef, parseClassList, setProperty } from '../util';
 import { updateAttribute } from './update-attribute';
 import { PlatformService, RegistryService } from '../platform';
@@ -8,10 +17,10 @@ import { isSameVNode } from './to-vnode';
 import { StyleService } from '../styles';
 import { h } from './h';
 import {
-  ComponentConstructorProperties,
   ComponentInstance,
   ComponentMeta,
   HostElement,
+  MemberMeta,
   RenderNode,
   VNode,
   VNodeData,
@@ -304,6 +313,10 @@ export class VDomService {
       // - all svgs get values as attributes not props
       // - check if elm contains name or if the value is array, object, or function
       const cmpMeta = this.registry.getCmpMeta(elm);
+
+      const memberMeta = Metadata.getMemberProps(cmpMeta)
+        .find(member => member.memberName === memberName);
+
       if (cmpMeta && cmpMeta.membersMeta && cmpMeta.membersMeta[memberName]) {
         // we know for a fact that this element is a known component
         // and this component has this member name as a property,
@@ -312,10 +325,10 @@ export class VDomService {
         setProperty(elm, memberName, newValue);
 
         const memberMeta = cmpMeta.membersMeta[memberName];
-        if (isHostElement && memberMeta.reflectToAttrib) {
+        if (isHostElement && memberMeta.reflect) {
           updateAttribute(
             elm,
-            memberMeta.attribName,
+            memberMeta.attrName,
             newValue,
             memberMeta.propType === PROP_TYPE.Boolean,
           )
@@ -387,7 +400,7 @@ export class VDomService {
     i?: number,
     childNode?: RenderNode,
   ) {
-    // plt.tmpDisconnected = true;
+    this.platform.tmpDisconnected = true;
 
     const oldSlotChildNodes = parentElm.childNodes;
     for (i = oldSlotChildNodes.length - 1; i >= 0; i--) {
@@ -418,7 +431,7 @@ export class VDomService {
       this.putBackInOriginalLocation(childNode, recursive);
     }
 
-    // plt.tmpDisconnected = false;
+    this.platform.tmpDisconnected = false;
   }
 
   private createElm(
@@ -694,16 +707,15 @@ export class VDomService {
     }
   }
 
-  private reflectInstanceValuesToHostAttributes(
-    properties: ComponentConstructorProperties,
+  /*private reflectInstanceValuesToHostAttributes(
+    properties: MemberMeta[],
     instance: ComponentInstance,
   ) {
-    return Object.keys(properties || [])
-      .reduce((reflectHostAttr, memberName) => ({
-        ...reflectHostAttr,
-        [memberName]: instance[memberName],
-      }), {} as VNodeData);
-  }
+    return properties.reduce((reflectHostAttr, memberName) => ({
+      ...reflectHostAttr,
+      [memberName]: instance[memberName],
+    }), {} as VNodeData);
+  }*/
 
   public patch(
     hostElm: HostElement,
@@ -754,7 +766,7 @@ export class VDomService {
 
       // while we're moving nodes around existing nodes, temporarily disable
       // the disconnectCallback from working
-      // plt.tmpDisconnected = true;
+      this.platform.tmpDisconnected = true;
 
       this.relocateNodes.forEach(({ nodeToRelocate, slotRefNode }) => {
         // by default we're just going to insert it directly
@@ -796,7 +808,7 @@ export class VDomService {
 
       // done moving nodes around
       // allow the disconnect callback to work again
-      // plt.tmpDisconnected = false;
+      this.platform.tmpDisconnected = false;
     }
 
     if (this.checkSlotFallbackVisibility) {
@@ -816,16 +828,12 @@ export class VDomService {
     instance: ComponentInstance,
   ) {
     try {
-      const { membersMeta, eventsMeta, listenersMeta, encapsulationMeta } = cmpMeta;
+      const { membersMeta, encapsulationMeta } = cmpMeta;
 
       const useNativeShadowDom = encapsulationMeta === ENCAPSULATION.ShadowDom && this.platform.supportsShadowDom;
       const rootElm = <HTMLElement>(useNativeShadowDom ? hostElm.shadowRoot : hostElm);
 
-      const reflectHostAttr = this.reflectInstanceValuesToHostAttributes({
-        ...membersMeta,
-        ...eventsMeta,
-        ...listenersMeta,
-      }, instance);
+      // const reflectHostAttr = this.reflectInstanceValuesToHostAttributes(membersMeta, instance);
 
       if (!hostElm['ox-rn']) {
         // attach the styles this component needs, if any
@@ -842,7 +850,7 @@ export class VDomService {
         }
       }
 
-      if (instance.render || instance.hostData || reflectHostAttr) {
+      if (instance.render || instance.hostData/* || reflectHostAttr*/) {
         // tell the platform we're actively rendering
         // if a value is changed within a render() then
         // this tells the platform not to queue the change
@@ -852,9 +860,9 @@ export class VDomService {
 
         let vnodeHostData = instance.hostData && instance.hostData();
 
-        if (reflectHostAttr) {
+        /*if (reflectHostAttr) {
           vnodeHostData = vnodeHostData ? Object.assign(vnodeHostData, reflectHostAttr) : reflectHostAttr;
-        }
+        }*/
 
         // tell the platform we're done rendering
         // now any changes will again queue

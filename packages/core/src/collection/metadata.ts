@@ -1,49 +1,64 @@
-import { BaseMetadataStorage, Reflector, Type } from '@one/core';
+import { BaseMetadataStorage, Reflector } from '@one/core';
 
-import { AbstractComponent, ComponentMeta, EventMeta, ListenMeta } from '../interfaces';
 import { COMPONENT_META } from './tokens';
+import { AbstractComponent, ComponentMeta, ListenMeta, MemberMeta, MethodMeta, WatchMeta } from '../interfaces';
+import { MEMBER_TYPE } from '../collection';
 
 export class Metadata extends BaseMetadataStorage {
-  static events = new Set<EventMeta>();
-  static listeners = new Set<ListenMeta>();
-  static watchers = new Set();
-  static methods = new Set();
-  static states = new Set();
-  static props = new Set();
+  public static listeners = new Set<ListenMeta>();
+  public static watchers = new Set<WatchMeta>();
+  public static methods = new Set<MethodMeta>();
+  public static members = new Set<MemberMeta>();
 
-  static getEvents(component: Type<any>) {
-    return this.filterByTarget(this.events, component);
-  }
-
-  static getListeners(component: Type<any>) {
+  private static getListeners(component: AbstractComponent) {
     return this.filterByTarget(this.listeners, component);
   }
 
-  static getWatchers(component: Type<any>) {
+  private static getWatchers(component: AbstractComponent) {
     return this.filterByTarget(this.watchers, component);
   }
 
-  static getMethods(component: Type<any>) {
+  private static getMethods(component: AbstractComponent) {
     return this.filterByTarget(this.methods, component);
   }
 
-  static getStates(component: Type<any>) {
-    return this.filterByTarget(this.states, component);
+  private static getMembers(component: AbstractComponent) {
+    return this.filterByTarget(this.members, component);
   }
 
-  static getProps(component: Type<any>) {
-    return this.filterByTarget(this.props, component);
+  private static filterMemberByType(cmpMeta: ComponentMeta, filterBy: MEMBER_TYPE) {
+    return cmpMeta.membersMeta.filter(({ memberType }) => memberType === filterBy);
   }
 
-  static getComponentMetadata(component: AbstractComponent) {
-    const componentDecoratorMeta = Reflector.get(COMPONENT_META, component);
+  public static getMemberMethods(cmpMeta: ComponentMeta): MemberMeta[] {
+    return this.filterMemberByType(cmpMeta, MEMBER_TYPE.Method);
+  }
+
+  public static getMemberElement(cmpMeta: ComponentMeta): MemberMeta {
+    return this.filterMemberByType(cmpMeta, MEMBER_TYPE.Element)[0];
+  }
+
+  public static getMemberEvents(cmpMeta: ComponentMeta): MemberMeta[] {
+    return this.filterMemberByType(cmpMeta, MEMBER_TYPE.Event);
+  }
+
+  public static getMemberProps(cmpMeta: ComponentMeta): MemberMeta[] {
+    return this.filterMemberByType(cmpMeta, MEMBER_TYPE.Prop);
+  }
+
+  public static getComponentMetadata(component: AbstractComponent) {
+    const componentMeta = Reflector.get(COMPONENT_META, component);
     const listenersMeta = this.getListeners(component);
-    const eventsMeta = this.getEvents(component);
+    const watchersMeta = this.getWatchers(component);
+    const methodsMeta = this.getMethods(component);
+    const membersMeta = this.getMembers(component);
 
     return {
-      ...componentDecoratorMeta,
+      ...componentMeta,
       listenersMeta,
-      eventsMeta,
+      watchersMeta,
+      methodsMeta,
+      membersMeta,
     } as ComponentMeta;
   }
 }

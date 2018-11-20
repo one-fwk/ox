@@ -1,36 +1,7 @@
 import { ComponentMeta } from './interfaces';
-import { DEFAULT_STYLE_MODE } from './collection/constants';
-
-export function cssToDom(css: string) {
-  const style = document.createElement('style');
-  style.textContent = css;
-  return style;
-}
-
-export function toArray<T>(item: T): T[] {
-  return Array.isArray(item) ? item : [item];
-}
+import { DEFAULT_STYLE_MODE, NODE_TYPE } from './collection';
 
 export const isDef = (v: any) => v != null;
-
-export function defineName(target: any, name: string) {
-  Object.defineProperty(target, 'name', {
-    configurable: false,
-    writable: false,
-    enumerable: false,
-    value: name,
-  });
-
-  return target;
-}
-
-export function getChildNodes(node: Node): Node[] {
-  const children = [];
-
-  node.childNodes.forEach(child => children.push(child));
-
-  return children;
-}
 
 export function expectClasses(elm: Element, classes: string[]) {
   return expect(elm.className.split(' '))
@@ -58,6 +29,15 @@ export function getScopeId(cmpMeta: ComponentMeta, mode?: string) {
 
 export function getElementScopeId(scopeId: string, isHostElement?: boolean) {
   return scopeId + (isHostElement ? '-h' : '-s');
+}
+
+export function isDisconnected(elm: Node) {
+  while (elm) {
+    if (!elm.parentNode) {
+      return elm.nodeType !== NODE_TYPE.DocumentNode;
+    }
+    elm = elm.parentNode;
+  }
 }
 
 /**

@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "module": "es2015",
+    "target": "es2015",
+    "module": "commonjs",
     "moduleResolution": "node",
     "jsx": "react",
     "jsxFactory": "h",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "downlevelIteration": true,
-    "strict": true,
     "lib": ["dom", "esnext"],
     "sourceMap": true
   }

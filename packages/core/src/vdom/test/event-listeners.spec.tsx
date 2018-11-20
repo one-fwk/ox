@@ -1,4 +1,4 @@
-import { mockTestingModule, VDomService } from '@onex/testing';
+import { mockTestingModule, VDomService } from '@ox/testing';
 import { h } from '../h';
 import { VNode } from '../../interfaces';
 

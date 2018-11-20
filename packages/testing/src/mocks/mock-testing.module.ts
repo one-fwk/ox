@@ -1,12 +1,20 @@
 import { Test } from '@one/testing';
 
-import { PlatformService } from '@ox/core/platform';
+import { PlatformModule, PlatformService } from '@ox/core/platform';
 import { VDomService } from '@ox/core/vdom';
+import { QueueModule } from '@ox/core/queue';
+import { StyleService } from '@ox/core/styles';
+import { BrowserModule } from '@ox/core';
 
 export function mockTestingModule() {
   return Test.createTestingModule({
+    imports: [
+      PlatformModule,
+      BrowserModule,
+    ],
     providers: [
-      PlatformService,
+      QueueModule,
+      StyleService,
       VDomService,
     ],
   }).compile();

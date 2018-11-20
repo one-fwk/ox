@@ -3,12 +3,10 @@
  */
 export const enum MEMBER_TYPE {
   Prop = 1 << 0,
-  PropMutable = 1 << 1,
-  PropContext = 1 << 2,
-  PropConnect = 1 << 3,
   State = 1 << 4,
   Method = 1 << 5,
   Element = 1 << 6,
+  Event = 1 << 7,
 }
 
 /**
@@ -42,9 +40,9 @@ export const enum PRIORITY {
  * Encapsulation
  */
 export const enum ENCAPSULATION {
-  NoEncapsulation = 0,
-  ShadowDom = 1,
-  ScopedCss = 2,
+  NoEncapsulation,
+  ShadowDom,
+  ScopedCss,
 }
 
 /**
@@ -109,12 +107,12 @@ export const APP_NAMESPACE_REGEX = /["']__APP__['"]/g;
  * Runtime Errors
  */
 export const enum RUNTIME_ERROR {
-  LoadBundleError = 1,
-  QueueEventsError = 2,
-  WillLoadError = 3,
-  DidLoadError = 4,
-  WillUpdateError = 5,
-  DidUpdateError = 6,
-  InitInstanceError = 7,
-  RenderError = 8,
+  LoadBundleError,
+  QueueEventsError,
+  WillLoadError,
+  DidLoadError,
+  WillUpdateError,
+  DidUpdateError,
+  InitInstanceError,
+  RenderError,
 }

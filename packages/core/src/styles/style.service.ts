@@ -9,6 +9,27 @@ import { getScopeId } from '../util';
 export class StyleService {
   constructor(private readonly plt: PlatformService) {}
 
+  public initTemplate(cmpMeta: ComponentMeta, encapsulation: ENCAPSULATION, style: string, styleMode: string) {
+    if (style) {
+
+      // we got a style mode for this component, let's create an id for this style
+      const styleModeId = cmpMeta.tagNameMeta + (styleMode || DEFAULT_STYLE_MODE);
+
+      if (!cmpMeta[styleModeId]) {
+        const templateElm = document.createElement('template');
+
+        // keep a reference to this template element within the
+        // Constructor using the style mode id as the key
+        cmpMeta[styleModeId] = templateElm;
+
+        // prod mode, no style id data attributes
+        templateElm.innerHTML = `<style>${style}</style>`;
+
+        document.head.appendChild(templateElm);
+      }
+    }
+  }
+
   public attachStyles(cmpMeta: ComponentMeta, hostElm: HostElement) {
     // first see if we've got a style for a specific mode
     // either this host element should use scoped css

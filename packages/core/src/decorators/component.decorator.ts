@@ -1,4 +1,4 @@
-import { Injectable, Reflector, TransientScope } from '@one/core';
+import { Injectable, Reflector } from '@one/core';
 
 import { COMPONENT_META, ENCAPSULATION, getStylesMeta } from '../collection';
 import { ComponentMeta, ComponentOptions } from '../interfaces';
@@ -11,17 +11,15 @@ export function Component(options: ComponentOptions): ClassDecorator {
   const cmpMeta: ComponentMeta = {
     tagNameMeta: options.selector,
     stylesMeta: getStylesMeta(options),
+    // normalizeEncapsulation
+    encapsulationMeta:
+      options.shadow ? ENCAPSULATION.ShadowDom :
+        options.scoped ? ENCAPSULATION.ScopedCss :
+          ENCAPSULATION.NoEncapsulation,
   };
-
-  // normalizeEncapsulation
-  cmpMeta.encapsulationMeta =
-    options.shadow ? ENCAPSULATION.ShadowDom :
-      options.scoped ? ENCAPSULATION.ScopedCss :
-        ENCAPSULATION.NoEncapsulation;
 
   return (target) => {
     Reflector.set(COMPONENT_META, cmpMeta, target);
-    TransientScope()(target);
     Injectable()(target);
   };
 }

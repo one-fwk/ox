@@ -4,11 +4,11 @@
  * Licensed under the MIT License
  * https://github.com/ionic-team/stencil/blob/master/LICENSE
  */
-import { mockTestingModule, VDomService } from '@onex/testing';
+import { mockTestingModule, VDomService } from '@ox/testing';
 import { VNode } from '../../interfaces';
 import { h, toVNode } from '../';
 import { expectClasses, getScopeId } from '../../util';
-import { SVG_NS } from '../../collection/constants';
+import { ENCAPSULATION } from '../../collection';
 
 function prop(name: any) {
   return function(obj: any) {
@@ -160,7 +160,7 @@ describe('renderer', () => {
       hostElm['s-sc'] = getScopeId({ tagNameMeta: 'my-tag' });
       vnode0 = {};
       vnode0.elm = hostElm;
-      hostElm = vdom.patch(hostElm, vnode0, h('my-tag', null, h('div', null)), false, 'scoped').elm;
+      hostElm = vdom.patch(hostElm, vnode0, h('my-tag', null, h('div', null)), false, ENCAPSULATION.ScopedCss).elm;
       expect(hostElm.firstChild.classList.contains('sc-my-tag')).toBe(true);
     });
 

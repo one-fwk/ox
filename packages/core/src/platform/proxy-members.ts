@@ -1,14 +1,14 @@
-export const definePropertyValue = (obj: any, propertyKey: string, value: any) => {
+export const definePropertyValue = (obj: any, memberName: string, value: any) => {
   // minification shortcut
-  Object.defineProperty(obj, propertyKey, {
+  Object.defineProperty(obj, memberName, {
     configurable: true,
     value,
   });
 };
 
-export const definePropertyGetterSetter = (obj: any, propertyKey: string, get: any, set: any) => {
+export const definePropertyGetterSetter = (obj: any, memberName: string, get: any, set: any) => {
   // minification shortcut
-  Object.defineProperty(obj, propertyKey, {
+  Object.defineProperty(obj, memberName, {
     configurable: true,
     get,
     set,

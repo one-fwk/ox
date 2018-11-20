@@ -44,9 +44,9 @@ export function getStylesMeta(componentOptions: ComponentOptions) {
     // }
 
     Object.keys(componentOptions.styleUrls || {}).reduce((stylesMeta, styleType) => {
-      const styleUrls = componentOptions.styleUrls as ModeStyles;
+      const styleUrls = <ModeStyles>componentOptions.styleUrls;
 
-      const sUrls = [].concat(styleUrls[styleType]);
+      const sUrls = [].concat(<any>styleUrls[styleType]);
 
       stylesMeta[styleType] = {
         externalStyles: sUrls.map(sUrl => ({

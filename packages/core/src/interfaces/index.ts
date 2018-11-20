@@ -1,4 +1,6 @@
 // export * from './metadata';
+import { TForwardRef, Type } from '@one/core';
+
 export * from './component.interface';
 export * from './component-options.interface';
 export * from './functional-component.interface';
