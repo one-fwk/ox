@@ -1,6 +1,7 @@
 import { Test } from '@one/testing';
 
-import { PlatformService, PlatformModule, RegistryService } from '@ox/platform';
+import { PlatformService, RegistryService } from '@ox/platform';
+import { DeclarationsModule } from '@ox/core';
 
 describe('PlatformModule', () => {
   describe('forFeature', () => {
@@ -9,7 +10,9 @@ describe('PlatformModule', () => {
 
       const module = await Test.createTestingModule({
         imports: [
-          PlatformModule.forFeature([TestComponent]),
+          DeclarationsModule.register({
+            declarations: [TestComponent],
+          }),
         ],
       }).compile();
 

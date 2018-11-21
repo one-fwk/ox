@@ -2,7 +2,7 @@ import { HostElementController } from '@ox/platform';
 import { ComponentMeta } from '@ox/collection';
 
 export interface MockMethods {
-  [methodName: string]: Function | false;
+  [methodName: string]: Function | boolean;
 }
 
 export type MockHostElement = (cmpMeta: ComponentMeta, mocks?: MockMethods) => any;

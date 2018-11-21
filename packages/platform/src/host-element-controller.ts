@@ -1,4 +1,4 @@
-import { Injectable } from '@one/core';
+import {forwardRef, Inject, Injectable} from '@one/core';
 
 import { PlatformService } from './platform.service';
 import { RegistryService } from './registry.service';
@@ -7,31 +7,35 @@ import { QueueService, RendererService } from '@ox/core/queue';
 import { VDomService } from '@ox/vdom';
 import {
   ComponentMeta,
-  HostElement,
-  MemberMeta,
-  MEMBER_TYPE,
-  Metadata,
-  RUNTIME_ERROR,
-  parsePropertyValue,
-  isDisconnected,
-  noop,
+  DEFAULT_STYLE_MODE,
   definePropertyGetterSetter,
   definePropertyValue,
+  ENCAPSULATION,
+  HostElement,
+  HostSnapshot,
+  HostSnapshotAttributes,
+  isDisconnected,
+  MEMBER_TYPE,
+  MemberMeta,
+  Metadata,
+  noop,
+  parsePropertyValue,
+  RUNTIME_ERROR,
 } from '@ox/collection';
 
-export type AttrProps = { [attr: string]: string };
+export type AttrProps = { [attrName: string]: string };
 
 @Injectable()
 export class HostElementController {
+  @Inject(forwardRef(() => PlatformService))
+  private readonly platform: PlatformService;
+
   constructor(
-    private readonly platform: PlatformService,
     private readonly renderer: RendererService,
     private readonly registry: RegistryService,
     private readonly style: StyleService,
     private readonly queue: QueueService,
     private readonly vdom: VDomService,
-    // private readonly cmpMeta: ComponentMeta,
-    // private readonly hostElm: HostElement,
   ) {}
 
   private attributeChanged(hostElm: HostElement, attrProps: AttrProps, attrName: string, newVal: string) {
@@ -69,6 +73,46 @@ export class HostElementController {
     }
   }
 
+  private initHostSnapshot(hostElm: HostElement, cmpMeta: ComponentMeta) {
+    // the host element has connected to the dom
+    // and we've waited a tick to make sure all frameworks
+    // have finished adding attributes and child nodes to the host
+    // before we go all out and hydrate this beast
+    // let's first take a snapshot of its original layout before render
+    /*if (!hostElm.mode) {
+      // looks like mode wasn't set as a property directly yet
+      // first check if there's an attribute
+      // next check the app's global
+    } else {
+
+    }*/
+    hostElm.mode = DEFAULT_STYLE_MODE;
+
+    /*if (!this.platform.supportsShadowDom) {
+      if (!hostElm['ox-cr'] && hostElm.getAttribute(SSR_VNODE_ID) && (cmpMeta.encapsulationMeta !== ENCAPSULATION.ShadowDom)) {
+
+      }
+    }*/
+
+    if (cmpMeta.encapsulationMeta === ENCAPSULATION.ShadowDom && !hostElm.shadowRoot) {
+      hostElm.attachShadow({ mode: 'open' });
+    }
+
+    // create a host snapshot object we'll
+    // use to store all host data about to be read later
+    const hostSnapshot: HostSnapshot = {
+      $attributes: {},
+    };
+
+    hostSnapshot.$attributes = Metadata.getMemberProps(cmpMeta)
+      .reduce((hostAttrs, { attrName }: MemberMeta) => ({
+        ...hostAttrs,
+        [attrName]: hostElm.getAttribute(attrName),
+      }), {} as HostSnapshotAttributes);
+
+    return hostSnapshot;
+  }
+
   private connectedCallback(hostElm: HostElement, cmpMeta: ComponentMeta) {
     // this element just connected, which may be re-connecting
     // ensure we remove it from our map of disconnected
@@ -99,7 +143,8 @@ export class HostElementController {
       this.queue.tick(() => {
         // start loading this component mode's bundle
         // if it's already loaded then the callback will be synchronous
-        // plt.hostSnapshotMap.set(elm, initHostSnapshot(plt.domApi, cmpMeta, elm));
+        const hostSnapshot = this.initHostSnapshot(hostElm, cmpMeta);
+        this.registry.hostSnapshots.set(hostElm, hostSnapshot);
         // we're already all loaded up :)
 
         if (this.registry.isCmpLoaded.get(hostElm)) {
@@ -112,14 +157,12 @@ export class HostElementController {
     }
   }
 
-  private proxyMemberMeta(hostElm: HostElement, membersMeta: MemberMeta[]) {
+  private proxyMembersMeta(hostElm: HostElement, membersMeta: MemberMeta[]) {
     // create getters/setters on the host element prototype to represent the public API
     // the setters allows us to know when data has changed so we can re-render
     const self = this;
 
     membersMeta.forEach(({ memberName, memberType }: MemberMeta) => {
-      const propType = Object;
-
       if (memberType === MEMBER_TYPE.Prop) {
         // @Prop() or @Prop({ mutable: true })
         definePropertyGetterSetter(
@@ -130,7 +173,7 @@ export class HostElementController {
           },
           function (newValue: any)  {
             // set value in component
-            const value = parsePropertyValue(<any>propType, newValue);
+            const value = parsePropertyValue(null, newValue);
             self.platform.setValue(this, memberName, value);
           },
         );
@@ -307,9 +350,9 @@ export class HostElementController {
 
     if (cmpMeta.membersMeta) {
       const attrProps = Metadata.getMemberProps(cmpMeta)
-        .reduce((attrs, { memberName, attr }: MemberMeta) => ({
+        .reduce((attrs, { memberName, attrName }: MemberMeta) => ({
           ...attrs,
-          [attr]: memberName,
+          [attrName]: memberName,
         }), {} as AttrProps);
 
       hostElm.attributeChangedCallback = function (attrName: string, oldVal: string, newVal: string) {
@@ -319,7 +362,7 @@ export class HostElementController {
       // add getters/setters to the host element members
       // these would come from the @Prop and @Method decorators that
       // should create the public API to this component
-      this.proxyMemberMeta(hostElm, cmpMeta.membersMeta);
+      this.proxyMembersMeta(hostElm, cmpMeta.membersMeta);
     }
   }
 }

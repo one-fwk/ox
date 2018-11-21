@@ -1,15 +1,9 @@
-import { BaseMetadataStorage, Reflector } from '@one/core';
-;
-import { COMPONENT_META } from './tokens';
-import { MEMBER_TYPE } from './constants';
-import {
-  AbstractComponent,
-  ComponentMeta,
-  ListenMeta,
-  MemberMeta,
-  MethodMeta,
-  WatchMeta,
-} from './interfaces'
+import {BaseMetadataStorage, Reflector} from '@one/core';
+import {COMPONENT_META} from './tokens';
+import {MEMBER_TYPE} from './constants';
+import {AbstractComponent, ComponentMeta, ListenMeta, MemberMeta, MethodMeta, WatchMeta,} from './interfaces'
+
+  ;
 
 export class Metadata extends BaseMetadataStorage {
   public static listeners = new Set<ListenMeta>();
@@ -26,11 +20,19 @@ export class Metadata extends BaseMetadataStorage {
   }
 
   private static getMethods(component: AbstractComponent) {
-    return this.filterByTarget(this.methods, component);
+    return this.filterByTarget(this.methods, component)
   }
 
   private static getMembers(component: AbstractComponent) {
-    return this.filterByTarget(this.members, component);
+    return this.filterByTarget(this.members, component)
+      .map( member => {
+        return member.memberType !== MEMBER_TYPE.Prop
+          ? member
+          : {
+            ...member,
+            attrName: member.attrName || member.memberName,
+          };
+      });
   }
 
   private static filterMemberByType(cmpMeta: ComponentMeta, filterBy: MEMBER_TYPE) {

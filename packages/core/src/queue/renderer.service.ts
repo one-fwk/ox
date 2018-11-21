@@ -35,7 +35,7 @@ export class RendererService {
       this.registry.isQueuedForUpdate.set(elm, true);
       // run the patch in the next tick
       // vdom diff and patch the host element for differences
-      if (this.platform.isAppLoaded) {
+      if (this.platform.isBrowserLoaded) {
         // app has already loaded
         // let's queue this work in the dom write phase
         this.queueClient.write(() => this.update(elm));
@@ -66,7 +66,7 @@ export class RendererService {
     hostAttrValue?: string,
   ) {
     const hostSnapshot = this.registry.hostSnapshots.get(hostElm);
-    const { memberName, memberType, attr, mutable } = memberMeta;
+    const { memberName, memberType, attrName, mutable } = memberMeta;
     const self = this;
 
     function getComponentProp() {
@@ -91,11 +91,11 @@ export class RendererService {
       const values = this.registry.values.get(hostElm);
 
       if (memberType === MEMBER_TYPE.Prop) {
-        if (attr && (values[memberName]) === undefined || values[memberName] === '') {
+        if (attrName && (values[memberName]) === undefined || values[memberName] === '') {
           // check the prop value from the host element attribute
           if (
             (hostAttributes = hostSnapshot && hostSnapshot.$attributes) &&
-            isDef(hostAttrValue = hostAttributes[attr])
+            isDef(hostAttrValue = hostAttributes[attrName])
           ) {
             // looks like we've got an attribute value
             // let's set it to our internal values

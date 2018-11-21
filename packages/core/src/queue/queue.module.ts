@@ -1,4 +1,4 @@
-import { Module } from '@one/core';
+import {forwardRef, Module} from '@one/core';
 
 import { PlatformModule } from '@ox/platform';
 import { VDomService } from '@ox/vdom';
@@ -8,7 +8,7 @@ import { RendererService } from './renderer.service';
 
 @Module({
   imports: [
-    PlatformModule,
+    forwardRef(() => PlatformModule),
     VDomService,
   ],
   providers: [

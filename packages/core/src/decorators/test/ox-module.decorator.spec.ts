@@ -1,8 +1,9 @@
 import { Reflector } from '@one/core';
-import { Test } from '@ox/testing';
+import { Test } from '@one/testing';
 
-import { RegistryService } from '../../../../platform/src/index';
-import { COMPONENT_META } from '../../../../collection/src/index';
+import { RegistryService} from '@ox/platform';
+import { COMPONENT_META } from '@ox/collection';
+import { DeclarationsModule } from '@ox/core';
 import { Component } from '../';
 
 describe('@OxModule()', () => {
@@ -12,8 +13,12 @@ describe('@OxModule()', () => {
     })
     class TestComponent {}
 
-    const module = await Test.createOxTestingModule({
-      declarations: [TestComponent],
+    const module = await Test.createTestingModule({
+      imports: [
+        DeclarationsModule.register({
+          declarations: [TestComponent],
+        })
+      ],
     }).compile();
 
     const registry = module.get<RegistryService>(RegistryService);

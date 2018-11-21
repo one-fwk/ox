@@ -5,8 +5,9 @@
  * https://github.com/ionic-team/stencil/blob/master/LICENSE
  */
 import { mockTestingModule, VDomService } from '@ox/testing';
-import { ENCAPSULATION, VNode, expectClasses, getScopeId } from '@ox/collection';
+import {ENCAPSULATION, VNode, expectClasses, getScopeId, HostElement, ComponentInstance} from '@ox/collection';
 import { h, toVNode } from '@ox/vdom';
+import {RegistryService} from "@ox/platform";
 
 function prop(name: any) {
   return function(obj: any) {
@@ -22,18 +23,90 @@ function map(fn: any, list: any) {
   return ret;
 }
 
-describe('renderer', () => {
+describe('VDomService', () => {
   let vdom: VDomService;
 
   let hostElm: any;
   let vnode0: VNode;
+  let cmpMeta: any = {};
   const inner = prop('innerHTML');
 
   beforeEach(async () => {
-    hostElm = document.createElement('div');
+    hostElm = document.createElement('ion-tag') as HostElement;
     vnode0 = {};
     vnode0.elm = hostElm;
-    vdom = (await mockTestingModule()).get(VDomService);
+    vdom = new (VDomService as any)();
+  });
+
+  describe('render', () => {
+    let registry: RegistryService;
+
+    beforeEach(() => {
+      registry = new RegistryService();
+      (vdom as any).registry = registry;
+      (vdom as any).platform = {
+        activeRender: false,
+      };
+    });
+
+    function doRender(component: any) {
+      const instance: any = new component();
+
+      registry.instances.set(hostElm, instance);
+      vdom.render(cmpMeta, hostElm, instance);
+
+      return instance;
+    }
+
+    it('should create a vnode with no children when there is a render() but it returned null', () => {
+      class TestComponent {
+        render(): any {
+          return null;
+        }
+      }
+
+      doRender(TestComponent);
+
+      const vnode = registry.vnodes.get(hostElm);
+      expect(vnode).toBeDefined();
+      expect(vnode.vchildren[0].vtext).toBe('');
+    });
+
+    it('should create a vnode when there is a render() and it returned a vnode', () => {
+      class TestComponent {
+        render() {
+          return h('div', 0, 'text');
+        }
+      }
+
+      doRender(TestComponent);
+
+      const vnode = registry.vnodes.get(hostElm);
+      expect(vnode).toBeDefined();
+      expect(vnode.vchildren[0].vtag).toBe('div');
+      expect(vnode.vchildren[0].vchildren[0].vtext).toBe('text');
+    });
+
+    it('should create a vnode for non null values of an array and create text for null values', () => {
+      class TestComponent {
+        render() {
+          return [
+            null,
+            h('div', 0, 'text'),
+            null
+          ];
+        }
+      }
+
+      doRender(TestComponent);
+
+      const vnode = registry.vnodes.get(hostElm);
+      expect(vnode).toBeDefined();
+      expect(vnode.vchildren[0].vtext).toBe('');
+      expect(vnode.vchildren[1].vtag).toBe('div');
+      expect(vnode.vchildren[1].vchildren[0].vtext).toBe('text');
+      expect(vnode.vchildren[2].vtext).toBe('');
+    });
   });
 
   describe('functional component', () => {
@@ -41,22 +114,20 @@ describe('renderer', () => {
       const DoesNotRenderChildren = () => h('div', null, 'mph');
       const RendersChildren = (props, children) => h('div', null, children, '-12');
 
-      hostElm = document.createElement('my-tag');
-
       const vnode0 = {} as VNode;
       vnode0.elm = hostElm;
 
-      const vnode1 = h('my-tag', null,
+      const vnode1 = h('ion-tag', null,
         h(DoesNotRenderChildren, null, '88'),
         h(RendersChildren, null, 'DMC')
       );
 
       hostElm = vdom.patch(hostElm, vnode0, vnode1).elm;
-      expect(hostElm.tagName).toBe('MY-TAG');
+      expect(hostElm.tagName).toBe('ION-TAG');
       expect(hostElm.childNodes[0].innerHTML).toBe('mph');
       expect(hostElm.childNodes[1].innerHTML).toBe('DMC-12');
 
-      const vnode2 = h('my-tag', null,
+      const vnode2 = h('ion-tag', null,
         h(DoesNotRenderChildren, null, '88'),
         h(RendersChildren, null, 'dmc')
       );
@@ -71,19 +142,17 @@ describe('renderer', () => {
         return h('span', props, children);
       }
 
-      hostElm = document.createElement('my-tag');
-
       const vnode0 = {} as VNode;
       vnode0.elm = hostElm;
 
-      const vnode1 = h('my-tag', null,
+      const vnode1 = h('ion-tag', null,
         h(functionalComp, { class: 'render-one' })
       );
 
       hostElm = vdom.patch(hostElm, vnode0, vnode1).elm;
       expect(hostElm.childNodes[0].className).toBe('render-one');
 
-      const vnode2 = h('my-tag', null,
+      const vnode2 = h('ion-tag', null,
         h(functionalComp, { class: 'render-two' })
       );
 
@@ -96,11 +165,10 @@ describe('renderer', () => {
         return h('span', props, children);
       }
 
-      hostElm = document.createElement('my-tag');
       vnode0 = {};
       vnode0.elm = hostElm;
       hostElm = vdom.patch(hostElm, vnode0,
-        h('my-tag', null,
+        h('ion-tag', null,
           h(functionalComp, { class: 'functional-cmp' })
         )
       ).elm;
@@ -114,11 +182,10 @@ describe('renderer', () => {
         return h('span', props, children);
       }
 
-      hostElm = document.createElement('my-tag');
       vnode0 = {};
       vnode0.elm = hostElm;
       hostElm = vdom.patch(hostElm, vnode0,
-        h('my-tag', null,
+        h('ion-tag', null,
           h('span', null, 'Test Child'),
           h(functionalComp, { class: 'functional-cmp' })
         )
@@ -135,11 +202,10 @@ describe('renderer', () => {
         return h('span', props, children);
       }
 
-      hostElm = document.createElement('my-tag');
       vnode0 = {};
       vnode0.elm = hostElm;
       hostElm = vdom.patch(hostElm, vnode0,
-        h('my-tag', null,
+        h('ion-tag', null,
           h(functionalComp, { class: 'functional-cmp' },
             h('span', null, 'Test Child'),
           )
@@ -154,12 +220,11 @@ describe('renderer', () => {
 
   describe('scoped css', () => {
     it('adds scope id to child elements', () => {
-      hostElm = document.createElement('my-tag');
-      hostElm['s-sc'] = getScopeId({ tagNameMeta: 'my-tag' });
+      hostElm['s-sc'] = getScopeId({ tagNameMeta: 'ion-tag' });
       vnode0 = {};
       vnode0.elm = hostElm;
-      hostElm = vdom.patch(hostElm, vnode0, h('my-tag', null, h('div', null)), false, ENCAPSULATION.ScopedCss).elm;
-      expect(hostElm.firstChild.classList.contains('sc-my-tag')).toBe(true);
+      hostElm = vdom.patch(hostElm, vnode0, h('ion-tag', null, h('div', null)), false, ENCAPSULATION.ScopedCss).elm;
+      expect(hostElm.firstChild.classList.contains('sc-ion-tag')).toBe(true);
     });
 
   });
@@ -252,7 +317,7 @@ describe('renderer', () => {
     const nextVNode = h('div', null, h('span', null, 'Hi'));
     hostElm = vdom.patch(hostElm, toVNode(prevElm), nextVNode).elm;
 
-    expect(hostElm).toEqual(prevElm);
+    expect(hostElm).toEqual(prevElm as any);
     expect(hostElm.tagName).toEqual('DIV');
     expect(hostElm.id).toEqual('id');
     expect(hostElm.className).toEqual('class');
@@ -273,7 +338,7 @@ describe('renderer', () => {
     const nextVNode = h('div', null, h('span', null, 'Hi'));
     hostElm = vdom.patch(hostElm, toVNode(prevElm), nextVNode, true).elm;
 
-    expect(hostElm).toEqual(prevElm);
+    expect(hostElm).toEqual(prevElm as any);
     expect(hostElm.tagName).toEqual('DIV');
     expect(hostElm.id).toEqual('id');
     expect(hostElm.className).toEqual('class');
@@ -283,29 +348,29 @@ describe('renderer', () => {
     });
 
     it('can remove some children of the root element', () => {
-    const h2 = document.createElement('h2');
-    h2.textContent = 'Hello';
+      const h2 = document.createElement('h2');
+      h2.textContent = 'Hello';
 
-    const prevElm = document.createElement('div');
-    prevElm.id = 'id';
-    prevElm.className = 'class';
+      const prevElm = document.createElement('div');
+      prevElm.id = 'id';
+      prevElm.className = 'class';
 
-    const text = document.createTextNode('FooBar');
-    (text as any).testProperty = function () {}; // ensures we dont recreate the Text Node
-    prevElm.appendChild(text);
-    prevElm.appendChild(h2);
+      const text = document.createTextNode('FooBar');
+      (text as any).testProperty = function () {}; // ensures we dont recreate the Text Node
+      prevElm.appendChild(text);
+      prevElm.appendChild(h2);
 
-    const nextVNode = h('div', null, 'Foobar');
-    hostElm = vdom.patch(hostElm, toVNode(prevElm), nextVNode).elm;
+      const nextVNode = h('div', null, 'Foobar');
+      hostElm = vdom.patch(hostElm, toVNode(prevElm), nextVNode).elm;
 
-    expect(hostElm).toEqual(prevElm);
-    expect(hostElm.tagName).toEqual('DIV');
-    expect(hostElm.id).toEqual('id');
-    expect(hostElm.className).toEqual('class');
-    expect(hostElm.childNodes.length).toEqual(1);
-    expect(hostElm.childNodes[0].nodeType).toEqual(3);
-    expect(hostElm.childNodes[0].wholeText).toEqual('Foobar');
-    expect(typeof hostElm.childNodes[0]['testProperty']).toEqual('function');
+      expect(hostElm).toEqual(prevElm);
+      expect(hostElm.tagName).toEqual('DIV');
+      expect(hostElm.id).toEqual('id');
+      expect(hostElm.className).toEqual('class');
+      expect(hostElm.childNodes.length).toEqual(1);
+      expect(hostElm.childNodes[0].nodeType).toEqual(3);
+      expect(hostElm.childNodes[0].wholeText).toEqual('Foobar');
+      expect(typeof hostElm.childNodes[0]['testProperty']).toEqual('function');
     });
 
     it('can remove text elements', () => {
@@ -323,7 +388,7 @@ describe('renderer', () => {
     const nextVNode = h('div', null, h('h2', null, 'Hello'));
     hostElm = vdom.patch(hostElm, toVNode(prevElm), nextVNode).elm;
 
-    expect(hostElm).toEqual(prevElm);
+    expect(hostElm).toEqual(prevElm as any);
     expect(hostElm.tagName).toEqual('DIV');
     expect(hostElm.id).toEqual('id');
     expect(hostElm.className).toEqual('class');

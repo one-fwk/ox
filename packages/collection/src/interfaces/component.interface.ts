@@ -45,7 +45,7 @@ export interface BundleIds {
 }
 
 export interface PropOptions {
-  attr?: string;
+  attrName?: string;
   mutable?: boolean;
   reflect?: boolean;
 }

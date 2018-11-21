@@ -1,11 +1,6 @@
-import { MockHostElement, createHostElementMocker } from '@ox/testing';
-import { RegistryService, HostElementController } from '@ox/platform';
-import {
-  ComponentMeta,
-  MEMBER_TYPE,
-  isDisconnected,
-  noop,
-} from '@ox/collection';
+import {createHostElementMocker, MockHostElement} from '@ox/testing';
+import {HostElementController, RegistryService} from '@ox/platform';
+import {ComponentDidUnload, ComponentMeta, isDisconnected, MEMBER_TYPE, noop,} from '@ox/collection';
 
 describe('HostElementController', () => {
   let cmpMeta: ComponentMeta;
@@ -17,10 +12,41 @@ describe('HostElementController', () => {
     hostElmCtrl = new (<any>HostElementController)();
     hostElm = class extends HTMLElement {};
     mockHostElement = createHostElementMocker(hostElmCtrl, hostElm);
+    cmpMeta = {} as any;
+  });
+
+  describe('initHostSnapshot', () => {
+    it('should set attributes', () => {
+      cmpMeta.tagNameMeta = 'host-snapshot-attr';
+      cmpMeta.membersMeta = [
+        {
+          memberName: 'first',
+          attrName: 'first',
+          memberType: MEMBER_TYPE.Prop,
+        },
+        {
+          memberName: 'lastName',
+          attrName: 'last-name',
+          memberType: MEMBER_TYPE.Prop,
+        },
+      ] as any;
+
+      const elm = mockHostElement(cmpMeta);
+
+      elm.setAttribute('dont-care', 'true');
+      elm.setAttribute('first', 'Marty');
+      elm.setAttribute('last-name', 'McFly');
+
+      const snapshot = hostElmCtrl.initHostSnapshot(elm, cmpMeta);
+      expect(snapshot.$attributes['dont-care']).toBeUndefined();
+      expect(snapshot.$attributes['first']).toEqual('Marty');
+      expect(snapshot.$attributes['last-name']).toEqual('McFly');
+    });
   });
 
   describe('disconnectedCallback', () => {
     beforeEach(() => {
+      hostElmCtrl.proxyMemberMeta = noop;
       hostElmCtrl.registry = new RegistryService();
       hostElmCtrl.platform = {
         tmpDisconnected: false,
@@ -31,19 +57,30 @@ describe('HostElementController', () => {
       };
     });
 
-    it('should call componentDidUnload on component instance', () => {
-      hostElmCtrl.proxyMemberMeta = noop;
+    it('should disconnect and call with element', () => {
       const disconnectedCallbackSpy = spyOn(hostElmCtrl, 'disconnectedCallback');
-      const componentDidUnloadSpy = jasmine.createSpy('componentDidUnload');
 
-      class TestComponent {}
-
-      (<any>TestComponent.prototype).componentDidUnload = componentDidUnloadSpy;
-
-      const instance = new TestComponent();
-
-      const cmpMeta: ComponentMeta = {
+      cmpMeta = {
         tagNameMeta: 'app-test-disconnected',
+      };
+
+      const elm = mockHostElement(cmpMeta, {
+        disconnectedCallback: false,
+      });
+
+      elm.remove();
+
+      expect(isDisconnected(elm)).toBe(true);
+      expect(disconnectedCallbackSpy).toHaveBeenCalledWith(elm);
+    });
+
+    it('should call componentDidUnload on component instance', () => {
+      const componentDidUnload = jasmine.createSpy('componentDidUnload');
+
+      const instance: ComponentDidUnload = { componentDidUnload };
+
+      cmpMeta = {
+        tagNameMeta: 'app-test-disconnected-did-unload',
       };
 
       const elm = mockHostElement(cmpMeta, {
@@ -56,8 +93,7 @@ describe('HostElementController', () => {
       elm.remove();
 
       expect(isDisconnected(elm)).toBe(true);
-      expect(disconnectedCallbackSpy).toHaveBeenCalledWith(elm);
-      expect(componentDidUnloadSpy).toHaveBeenCalled();
+      expect(componentDidUnload).toHaveBeenCalled();
     });
   });
 
@@ -66,7 +102,7 @@ describe('HostElementController', () => {
       hostElmCtrl.proxyMemberMeta = noop;
       hostElmCtrl.connectedCallback = jasmine.createSpy('connectedCallback');
 
-      const cmpMeta = {
+      cmpMeta = {
         tagNameMeta: 'app-test-connected',
       };
 
@@ -85,6 +121,7 @@ describe('HostElementController', () => {
       hostElm = class extends HTMLElement {
         static observedAttributes = ['team-name'];
       } as any;
+
       mockHostElement = createHostElementMocker(hostElmCtrl, hostElm);
       hostElmCtrl.proxyMemberMeta = noop;
     });
@@ -93,10 +130,10 @@ describe('HostElementController', () => {
       const attributeChangedSpy = spyOn(hostElmCtrl, 'attributeChanged');
 
       const tagNameMeta = 'app-test-attribute';
-      const cmpMeta: ComponentMeta = {
+      cmpMeta = {
         membersMeta: [
           {
-            attr: 'team-name',
+            attrName: 'team-name',
             memberName: 'teamName',
             memberType: MEMBER_TYPE.Prop,
             target: {} as any,

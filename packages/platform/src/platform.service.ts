@@ -1,41 +1,44 @@
-import { Injectable, Injector, Utils } from '@one/core';
+import {forwardRef, Inject, Injectable, Injector, Utils} from '@one/core';
 
 import { HostElementController } from './host-element-controller';
 import { RegistryService } from './registry.service';
 import { RendererService } from '@ox/core/queue';
+import { BrowserOptions } from '@ox/core';
 import {
   KEY_CODE_MAP,
   MEMBER_TYPE,
   Metadata,
   AbstractComponent,
   ComponentInstance,
-  HostElement,
+  HostElement, MemberMeta,
 } from '@ox/collection';
 
 @Injectable()
 export class PlatformService {
+  @Inject(forwardRef(() => HostElementController))
+  private readonly hostElmCtrl: HostElementController;
+
+  @Inject(forwardRef(() => RendererService))
+  private readonly renderer: RendererService;
+
   public readonly supportsShadowDom = !!document.documentElement.attachShadow;
   public hasConnectedComponent = false;
   public tmpDisconnected = false;
-  public isAppLoaded = false;
+  public isBrowserLoaded = false;
   public activeRender = false;
-  // public useSlotPolyfill = false;
   public namespace = 'ox';
   private ids = 0;
 
-  constructor(
-    private readonly hostElmCtrl: HostElementController,
-    private readonly registry: RegistryService,
-    private readonly renderer: RendererService,
-  ) {}
+  constructor(private readonly registry: RegistryService) {}
 
-  public async onAppInit() {
-    if (!this.supportsShadowDom) {
+  public async onBrowserInit(options: BrowserOptions) {
+    if (!this.supportsShadowDom && options.shadyDomPolyfill) {
       // external peer dependency
       await import('@webcomponents/shadydom');
     }
 
-    this.isAppLoaded = true;
+    this.namespace = options.namespace;
+    this.isBrowserLoaded = true;
   }
 
   public nextId() {
@@ -106,7 +109,7 @@ export class PlatformService {
         this.hostElmCtrl.create(hostCtor.prototype, cmpMeta);
 
         hostCtor.observedAttributes = Metadata.getMemberProps(cmpMeta)
-          .map(member => (member.attr || member.memberName));
+          .map(({ attrName }: MemberMeta) => attrName);
 
         customElements.define(cmpMeta.tagNameMeta, hostCtor);
       } else {
@@ -121,7 +124,7 @@ export class PlatformService {
     return event;
   }
 
-  public createComponent(elm: HostElement | HTMLElement) {
+  public createComponent(elm: HostElement) {
     const selector = elm.tagName.toLowerCase();
     const [, [component, injector]] = [...this.registry.components.entries()]
       .find(([tagName]) => tagName === selector)!;

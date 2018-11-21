@@ -331,7 +331,7 @@ export class VDomService {
             elm,
             memberMeta.attrName,
             newValue,
-            memberMeta.propType === PROP_TYPE.Boolean,
+            null,// memberMeta.propType === PROP_TYPE.Boolean,
           )
         }
       } else if (memberName !== 'ref') {
@@ -876,7 +876,7 @@ export class VDomService {
         // if we haven't already created a vnode, then we give the renderer the actual element
         // if this is a re-render, then give the renderer the last vnode we already created
         const oldVNode = this.registry.vnodes.get(hostElm) || ({} as VNode);
-        oldVNode.elm = rootElm;
+        oldVNode.elm = <any>rootElm;
 
         /*if (reflectToAttr) {
           // only care if we're reflecting values to the host element
